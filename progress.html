@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Progress Calculator – Realistic & Weekly View</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px 35px;
+            margin: 20px 0;
+        }
+        h1 {
+            margin-top: 0;
+            color: #1a365d;
+            font-size: 28px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin: 15px 0 5px;
+            color: #2d3748;
+        }
+        select, input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border 0.2s;
+        }
+        select:focus, input:focus {
+            border-color: #4299e1;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66,153,225,0.2);
+        }
+        .time-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .time-group > div {
+            flex: 1;
+        }
+        .time-group label {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0 0 3px;
+        }
+        .time-group input {
+            width: 100%;
+        }
+        button {
+            display: block;
+            width: 100%;
+            background: #3182ce;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 25px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #2b6cb0;
+        }
+        .secondary-btn {
+            background: #38a169;
+        }
+        .secondary-btn:hover {
+            background: #2f855a;
+        }
+        .results {
+            margin-top: 30px;
+            background: #edf2f7;
+            border-radius: 12px;
+            padding: 20px;
+            display: none;
+        }
+        .results h2 {
+            margin: 0 0 15px;
+            color: #1a202c;
+            font-size: 22px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .result-item span:first-child {
+            color: #4a5568;
+        }
+        .result-item span:last-child {
+            font-weight: 600;
+            color: #1a202c;
+        }
+        .bottleneck {
+            background: #fff5f5;
+            border-left: 4px solid #e53e3e;
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-size: 15px;
+            color: #c53030;
+        }
+        .warning {
+            background: #fffbeb;
+            border-left: 4px solid #d69e2e;
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-size: 15px;
+            color: #975a16;
+        }
+        .goal-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #cbd5e0;
+        }
+        .goal-section label {
+            margin-top: 0;
+        }
+        .pace-result {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 12px 15px;
+            margin-top: 15px;
+            border-radius: 6px;
+            font-size: 15px;
+            color: #22543d;
+        }
+        .daily-breakdown {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 12px 15px;
+            margin-top: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #22543d;
+        }
+        .info-text {
+            font-size: 14px;
+            color: #718096;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+        .current-progress {
+            background: #ebf8ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .current-progress h3 {
+            margin: 0 0 10px;
+            color: #2b6cb0;
+        }
+        .two-col {
+            display: flex;
+            gap: 15px;
+        }
+        .two-col > div {
+            flex: 1;
+        }
+        .toggle-box {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+        .hidden {
+            display: none;
+        }
+        .inline-unit {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .copyright {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Language Progress Calculator</h1>
+        <p class="subtitle">Realistic planning without needing a lifetime of study logs</p>
+
+        <!-- Language Category -->
+        <label for="langCat">Language Category (difficulty for native English speaker):</label>
+        <select id="langCat">
+            <option value="1">Category 1 (easiest: Spanish, French, Italian…)</option>
+            <option value="2">Category 2 (moderate: German, Indonesian…)</option>
+            <option value="3" selected>Category 3 (hard: Russian, Hindi…)</option>
+            <option value="4">Category 4 (hardest: Arabic, Mandarin, Japanese…)</option>
+        </select>
+
+        <div class="two-col">
+            <div>
+                <label for="level">Your current CEFR level:</label>
+                <select id="level">
+                    <option value="A0">A0 (Beginner)</option>
+                    <option value="A1">A1 (Elementary)</option>
+                    <option value="A2">A2 (Pre-Intermediate)</option>
+                    <option value="B1" selected>B1 (Intermediate)</option>
+                    <option value="B2">B2 (Upper-Intermediate)</option>
+                    <option value="C1">C1 (Advanced)</option>
+                </select>
+            </div>
+            <div>
+                <label for="goalLevel">Your goal level:</label>
+                <select id="goalLevel">
+                    <!-- dynamically populated -->
+                </select>
+            </div>
+        </div>
+        <p style="font-size:14px; color:#4a5568; margin:5px 0 0;">
+            Cumulative vocab targets: A1=600, A2=1200, B1=2500, B2=5000, C1=10000, C2=20000
+        </p>
+
+        <!-- Current Progress Section -->
+        <div class="current-progress">
+            <h3>📋 Your current progress</h3>
+            <label for="knownWords">Total words you already know (estimate):</label>
+            <input type="number" id="knownWords" placeholder="e.g., 3500" min="0" step="1" value="0">
+            <p style="font-size:13px; color:#4a5568;">Listening & practice hours are auto-set to the minimum for your current level.</p>
+
+            <div class="toggle-box">
+                <label>
+                    <input type="checkbox" id="manualHoursToggle" onchange="toggleManualHours()"> 
+                    I know my exact total listening and practice hours
+                </label>
+                <div id="manualHoursFields" class="hidden">
+                    <label for="doneListenHours">Total listening hours done:</label>
+                    <div class="time-group">
+                        <div>
+                            <label for="doneListenH">Hours</label>
+                            <input type="number" id="doneListenH" placeholder="0" min="0" value="0" step="1">
+                        </div>
+                        <div>
+                            <label for="doneListenM">Minutes</label>
+                            <input type="number" id="doneListenM" placeholder="0" min="0" max="59" value="0" step="1">
+                        </div>
+                    </div>
+                    <label for="donePracticeHours">Total practice hours done:</label>
+                    <div class="time-group">
+                        <div>
+                            <label for="donePracticeH">Hours</label>
+                            <input type="number" id="donePracticeH" placeholder="0" min="0" value="0" step="1">
+                        </div>
+                        <div>
+                            <label for="donePracticeM">Minutes</label>
+                            <input type="number" id="donePracticeM" placeholder="0" min="0" max="59" value="0" step="1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Inputs -->
+        <label for="words">Words learned this week:</label>
+        <input type="number" id="words" placeholder="e.g., 80" min="0" step="1">
+
+        <label>Listening time this week:</label>
+        <div class="time-group">
+            <div>
+                <label for="listenHours">Hours</label>
+                <input type="number" id="listenHours" placeholder="0" min="0" value="0" step="1">
+            </div>
+            <div>
+                <label for="listenMinutes">Minutes</label>
+                <input type="number" id="listenMinutes" placeholder="0" min="0" max="59" value="0" step="1">
+            </div>
+        </div>
+
+        <label>Active deliberate practice this week:</label>
+        <div class="time-group">
+            <div>
+                <label for="practiceHours">Hours</label>
+                <input type="number" id="practiceHours" placeholder="0" min="0" value="0" step="1">
+            </div>
+            <div>
+                <label for="practiceMinutes">Minutes</label>
+                <input type="number" id="practiceMinutes" placeholder="0" min="0" max="59" value="0" step="1">
+            </div>
+        </div>
+
+        <button onclick="calculate()">Calculate Progress</button>
+
+        <div class="results" id="results">
+            <h2>📈 Weekly Analysis</h2>
+            <div id="targetInfo" style="margin-bottom:15px; font-size:14px; color:#2d3748;"></div>
+            
+            <div class="result-item"><span>📚 Words completion</span><span id="wordsFrac"></span></div>
+            <div class="result-item"><span>🎧 Listening completion</span><span id="listenFrac"></span></div>
+            <div class="result-item"><span>🗣️ Practice completion</span><span id="practiceFrac"></span></div>
+            
+            <div style="margin-top:10px; border-top:1px solid #cbd5e0; padding-top:10px;">
+                <div class="result-item"><span><strong>📊 Total progress (cumulative)</strong></span><span id="weeklyProgress"></span></div>
+                <div class="result-item"><span><strong>🔥 This week's contribution</strong></span><span id="weeklyOnlyProgress"></span></div>
+            </div>
+
+            <div id="bottleneckBox" class="bottleneck" style="display:none;"></div>
+            <div id="unrealisticBox" class="warning" style="display:none;"></div>
+            
+            <div style="margin-top:20px;">
+                <div class="result-item"><span>⏳ Estimated weeks to finish</span><span id="weeksNeeded"></span></div>
+                <div class="result-item"><span>📅 That's about</span><span id="timeHuman"></span></div>
+                <div class="result-item"><span>🗓️ In years</span><span id="yearsHuman"></span></div>
+            </div>
+            <div style="margin-top:10px; font-size:14px; color:#4a5568;">
+                <strong>Individual remaining times:</strong>
+                <div id="individualTimes" style="margin-top:5px;"></div>
+            </div>
+
+            <!-- Goal Timeframe Section -->
+            <div class="goal-section">
+                <h2>🎯 Set Your Desired Timeframe</h2>
+                <div class="inline-unit">
+                    <label for="goalNumber" style="margin:0;">I want to reach the goal level in:</label>
+                    <input type="number" id="goalNumber" placeholder="e.g., 12" min="0.5" step="0.5" style="width:100px;">
+                    <select id="goalUnit">
+                        <option value="months" selected>months</option>
+                        <option value="years">years</option>
+                    </select>
+                </div>
+                <button class="secondary-btn" onclick="calculatePace()">Calculate Required Weekly Pace</button>
+                <div id="paceResult" class="pace-result" style="display:none;"></div>
+                <div id="dailyBreakdown" class="daily-breakdown" style="display:none;"></div>
+            </div>
+
+            <p class="info-text">
+                ⚠️ The projection uses the <strong>slowest</strong> remaining component. If projected time exceeds 100 years, a warning is shown.
+            </p>
+        </div>
+
+        <!-- Copyright notice -->
+        <div class="copyright">
+            © 2026 Maria Egorova. All rights reserved.
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // CUMULATIVE TARGETS
+        // ============================================================
+        const vocabCumulative = {
+            A1: 600,
+            A2: 1200,
+            B1: 2500,
+            B2: 5000,
+            C1: 10000,
+            C2: 20000
+        };
+
+        const baseListeningInc = {
+            A0: 150, A1: 300, A2: 500, B1: 800, B2: 1200, C1: 1500
+        };
+        const basePracticeInc = {
+            A0: 80, A1: 150, A2: 250, B1: 400, B2: 600, C1: 800
+        };
+
+        const categoryMultipliers = {
+            "1": 0.6,
+            "2": 0.85,
+            "3": 1.0,
+            "4": 1.3
+        };
+
+        const allLevels = ['A0','A1','A2','B1','B2','C1','C2'];
+
+        // --- Helper: convert decimal hours to "Xh Ym" string ---
+        function formatHours(h) {
+            if (h === 0) return "0h";
+            const hrs = Math.floor(h);
+            const mins = Math.round((h - hrs) * 60);
+            if (mins === 0) return `${hrs}h`;
+            return `${hrs}h ${mins}m`;
+        }
+
+        // Populate goal dropdown
+        function updateGoalOptions() {
+            const currentLevel = document.getElementById("level").value;
+            const currentIndex = allLevels.indexOf(currentLevel);
+            const goalSelect = document.getElementById("goalLevel");
+            goalSelect.innerHTML = '';
+            for (let i = currentIndex + 1; i < allLevels.length; i++) {
+                const level = allLevels[i];
+                const option = document.createElement('option');
+                option.value = level;
+                option.textContent = level;
+                goalSelect.appendChild(option);
+            }
+            goalSelect.selectedIndex = 0;
+        }
+        document.getElementById("level").addEventListener("change", updateGoalOptions);
+        updateGoalOptions();
+
+        function toggleManualHours() {
+            const checked = document.getElementById("manualHoursToggle").checked;
+            document.getElementById("manualHoursFields").classList.toggle("hidden", !checked);
+        }
+
+        function getCumulativeHours(category) {
+            const mult = categoryMultipliers[category] || 1.0;
+            let cumListen = { A1:0, A2:0, B1:0, B2:0, C1:0, C2:0 };
+            let cumPractice = { A1:0, A2:0, B1:0, B2:0, C1:0, C2:0 };
+
+            cumListen.A1 = Math.round(baseListeningInc.A0 * mult);
+            cumPractice.A1 = Math.round(basePracticeInc.A0 * mult);
+
+            cumListen.A2 = cumListen.A1 + Math.round(baseListeningInc.A1 * mult);
+            cumPractice.A2 = cumPractice.A1 + Math.round(basePracticeInc.A1 * mult);
+
+            cumListen.B1 = cumListen.A2 + Math.round(baseListeningInc.A2 * mult);
+            cumPractice.B1 = cumPractice.A2 + Math.round(basePracticeInc.A2 * mult);
+
+            cumListen.B2 = cumListen.B1 + Math.round(baseListeningInc.B1 * mult);
+            cumPractice.B2 = cumPractice.B1 + Math.round(basePracticeInc.B1 * mult);
+
+            cumListen.C1 = cumListen.B2 + Math.round(baseListeningInc.B2 * mult);
+            cumPractice.C1 = cumPractice.B2 + Math.round(basePracticeInc.B2 * mult);
+
+            cumListen.C2 = cumListen.C1 + Math.round(baseListeningInc.C1 * mult);
+            cumPractice.C2 = cumPractice.C1 + Math.round(basePracticeInc.C1 * mult);
+
+            return { cumListen, cumPractice };
+        }
+
+        function getAlreadyDone(category, currentLevel) {
+            const { cumListen, cumPractice } = getCumulativeHours(category);
+            let levelListen = (currentLevel === 'A0') ? 0 : cumListen[currentLevel];
+            let levelPractice = (currentLevel === 'A0') ? 0 : cumPractice[currentLevel];
+
+            const manual = document.getElementById("manualHoursToggle").checked;
+            if (manual) {
+                const manualListenH = parseFloat(document.getElementById("doneListenH").value) || 0;
+                const manualListenM = parseFloat(document.getElementById("doneListenM").value) || 0;
+                const manualPracticeH = parseFloat(document.getElementById("donePracticeH").value) || 0;
+                const manualPracticeM = parseFloat(document.getElementById("donePracticeM").value) || 0;
+                const manualListen = manualListenH + manualListenM / 60;
+                const manualPractice = manualPracticeH + manualPracticeM / 60;
+                return {
+                    doneListen: Math.max(levelListen, manualListen),
+                    donePractice: Math.max(levelPractice, manualPractice)
+                };
+            }
+            return { doneListen: levelListen, donePractice: levelPractice };
+        }
+
+        function getRemaining() {
+            const currentLevel = document.getElementById("level").value;
+            const goalLevel = document.getElementById("goalLevel").value;
+            const category = document.getElementById("langCat").value;
+            if (!goalLevel || allLevels.indexOf(goalLevel) <= allLevels.indexOf(currentLevel)) return null;
+
+            const targetVocab = vocabCumulative[goalLevel];
+            const { cumListen, cumPractice } = getCumulativeHours(category);
+            const targetListen = cumListen[goalLevel];
+            const targetPractice = cumPractice[goalLevel];
+
+            const knownWords = parseFloat(document.getElementById("knownWords").value) || 0;
+            const { doneListen, donePractice } = getAlreadyDone(category, currentLevel);
+
+            const remW = Math.max(0, targetVocab - knownWords);
+            const remL = Math.max(0, targetListen - doneListen);
+            const remP = Math.max(0, targetPractice - donePractice);
+
+            return {
+                currentLevel, goalLevel, category,
+                targetVocab, targetListen, targetPractice,
+                knownWords, doneListen, donePractice,
+                remW, remL, remP
+            };
+        }
+
+        function calculate() {
+            const r = getRemaining();
+            if (!r) {
+                alert("Please select a goal level higher than your current level.");
+                return;
+            }
+
+            const wWords = parseFloat(document.getElementById("words").value) || 0;
+            const wListenH = parseFloat(document.getElementById("listenHours").value) || 0;
+            const wListenM = parseFloat(document.getElementById("listenMinutes").value) || 0;
+            const wPracticeH = parseFloat(document.getElementById("practiceHours").value) || 0;
+            const wPracticeM = parseFloat(document.getElementById("practiceMinutes").value) || 0;
+            const wListen = wListenH + wListenM / 60;
+            const wPractice = wPracticeH + wPracticeM / 60;
+
+            // Cumulative completion
+            const totalW = r.knownWords + wWords;
+            const totalL = r.doneListen + wListen;
+            const totalP = r.donePractice + wPractice;
+
+            const fWords = Math.min(1, totalW / r.targetVocab);
+            const fListen = Math.min(1, totalL / r.targetListen);
+            const fPractice = Math.min(1, totalP / r.targetPractice);
+
+            let totalProgress = 0;
+            if (totalW > 0 && totalL > 0 && totalP > 0) {
+                totalProgress = Math.cbrt(fWords * fListen * fPractice) * 100;
+            }
+
+            // This week's contribution
+            const fracW = (r.remW > 0) ? Math.min(1, wWords / r.remW) : 1;
+            const fracL = (r.remL > 0) ? Math.min(1, wListen / r.remL) : 1;
+            const fracP = (r.remP > 0) ? Math.min(1, wPractice / r.remP) : 1;
+            let weeklyContribution = Math.cbrt(fracW * fracL * fracP) * 100;
+            if (r.remW === 0 && r.remL === 0 && r.remP === 0) weeklyContribution = 0;
+
+            document.getElementById("wordsFrac").textContent = (fWords * 100).toFixed(2) + "%";
+            document.getElementById("listenFrac").textContent = (fListen * 100).toFixed(2) + "%";
+            document.getElementById("practiceFrac").textContent = (fPractice * 100).toFixed(2) + "%";
+            document.getElementById("weeklyProgress").textContent = totalProgress.toFixed(2) + "%";
+            document.getElementById("weeklyOnlyProgress").textContent = weeklyContribution.toFixed(2) + "%";
+
+            // Target info with formatted hours
+            document.getElementById("targetInfo").innerHTML = 
+                `<strong>Path:</strong> ${r.currentLevel} → ${r.goalLevel} (Category ${r.category})<br>
+                 <strong>Total target for ${r.goalLevel}:</strong> ${r.targetVocab} words, ${formatHours(r.targetListen)} listening, ${formatHours(r.targetPractice)} practice<br>
+                 <strong>Already done:</strong> ${r.knownWords} words, ${formatHours(r.doneListen)} listening, ${formatHours(r.donePractice)} practice<br>
+                 <strong>Remaining:</strong> ${r.remW} words, ${formatHours(r.remL)} listening, ${formatHours(r.remP)} practice`;
+
+            let weeksW = Infinity, weeksL = Infinity, weeksP = Infinity;
+            if (wWords > 0 && r.remW > 0) weeksW = r.remW / wWords;
+            else if (r.remW === 0) weeksW = 0;
+            if (wListen > 0 && r.remL > 0) weeksL = r.remL / wListen;
+            else if (r.remL === 0) weeksL = 0;
+            if (wPractice > 0 && r.remP > 0) weeksP = r.remP / wPractice;
+            else if (r.remP === 0) weeksP = 0;
+
+            const remainingComps = [];
+            if (r.remW > 0 && wWords > 0) remainingComps.push(weeksW);
+            if (r.remL > 0 && wListen > 0) remainingComps.push(weeksL);
+            if (r.remP > 0 && wPractice > 0) remainingComps.push(weeksP);
+            const anyInfinite = (r.remW > 0 && wWords === 0) || (r.remL > 0 && wListen === 0) || (r.remP > 0 && wPractice === 0);
+
+            let maxWeeks;
+            if (remainingComps.length === 0 && !anyInfinite) {
+                maxWeeks = 0;
+            } else if (anyInfinite) {
+                maxWeeks = Infinity;
+            } else {
+                maxWeeks = Math.max(...remainingComps);
+            }
+
+            const bottleneckBox = document.getElementById("bottleneckBox");
+            const unrealisticBox = document.getElementById("unrealisticBox");
+            bottleneckBox.style.display = "none";
+            unrealisticBox.style.display = "none";
+
+            const UNREALISTIC_WEEKS = 5200; // ~100 years
+
+            if (!isFinite(maxWeeks)) {
+                bottleneckBox.style.display = "block";
+                let msg = "🔴 No progress on: ";
+                if (r.remW > 0 && wWords === 0) msg += "Vocabulary ";
+                if (r.remL > 0 && wListen === 0) msg += "Listening ";
+                if (r.remP > 0 && wPractice === 0) msg += "Practice ";
+                bottleneckBox.textContent = msg;
+            } else if (maxWeeks === 0) {
+                bottleneckBox.style.display = "block";
+                bottleneckBox.textContent = "✅ All targets already reached! You’re at the goal level.";
+            } else {
+                let msg = "🔴 Bottleneck: ";
+                if (maxWeeks === weeksW) msg += "Vocabulary – learn more words per week.";
+                else if (maxWeeks === weeksL) msg += "Listening – increase active listening hours.";
+                else if (maxWeeks === weeksP) msg += "Active Practice – more speaking/drills/grammar.";
+                bottleneckBox.textContent = msg;
+                bottleneckBox.style.display = "block";
+
+                if (maxWeeks > UNREALISTIC_WEEKS) {
+                    unrealisticBox.style.display = "block";
+                    unrealisticBox.textContent = "⚠️ With your current pace, reaching the goal is practically impossible (over 100 years). Consider significantly increasing your weekly effort or adjusting your timeframe.";
+                }
+            }
+
+            if (!isFinite(maxWeeks)) {
+                document.getElementById("weeksNeeded").textContent = "∞ (no weekly input)";
+                document.getElementById("timeHuman").textContent = "—";
+                document.getElementById("yearsHuman").textContent = "—";
+            } else if (maxWeeks === 0) {
+                document.getElementById("weeksNeeded").textContent = "0 (already complete)";
+                document.getElementById("timeHuman").textContent = "Already there!";
+                document.getElementById("yearsHuman").textContent = "0 years";
+            } else if (maxWeeks > UNREALISTIC_WEEKS) {
+                document.getElementById("weeksNeeded").textContent = ">5200 weeks";
+                document.getElementById("timeHuman").textContent = ">100 years (unrealistic)";
+                document.getElementById("yearsHuman").textContent = ">100 years";
+            } else {
+                document.getElementById("weeksNeeded").textContent = maxWeeks.toFixed(1) + " weeks";
+                const totalDays = maxWeeks * 7;
+                const months = Math.floor(totalDays / 30.44);
+                const days = Math.round(totalDays % 30.44);
+                document.getElementById("timeHuman").textContent = 
+                    `${months} month${months !== 1 ? 's' : ''} and ${days} day${days !== 1 ? 's' : ''}`;
+                const years = maxWeeks / 52.1429;
+                document.getElementById("yearsHuman").textContent = years.toFixed(2) + " years";
+            }
+
+            let indHTML = "";
+            indHTML += `📚 Words: ${r.remW === 0 ? "Done" : (wWords > 0 ? (weeksW > UNREALISTIC_WEEKS ? ">100 years" : weeksW.toFixed(1)+' weeks') : '∞')} &nbsp;&nbsp;`;
+            indHTML += `🎧 Listening: ${r.remL === 0 ? "Done" : (wListen > 0 ? (weeksL > UNREALISTIC_WEEKS ? ">100 years" : weeksL.toFixed(1)+' weeks') : '∞')} &nbsp;&nbsp;`;
+            indHTML += `🗣️ Practice: ${r.remP === 0 ? "Done" : (wPractice > 0 ? (weeksP > UNREALISTIC_WEEKS ? ">100 years" : weeksP.toFixed(1)+' weeks') : '∞')}`;
+            document.getElementById("individualTimes").innerHTML = indHTML;
+
+            document.getElementById("results").style.display = "block";
+        }
+
+        function calculatePace() {
+            const r = getRemaining();
+            if (!r) {
+                alert("Please select a valid goal level first.");
+                return;
+            }
+            const goalNumber = parseFloat(document.getElementById("goalNumber").value);
+            const goalUnit = document.getElementById("goalUnit").value;
+            const paceDiv = document.getElementById("paceResult");
+            const dailyDiv = document.getElementById("dailyBreakdown");
+
+            if (isNaN(goalNumber) || goalNumber <= 0) {
+                paceDiv.style.display = "block";
+                paceDiv.innerHTML = "Please enter a valid timeframe (e.g., 12).";
+                dailyDiv.style.display = "none";
+                return;
+            }
+
+            let months = goalNumber;
+            if (goalUnit === "years") months = goalNumber * 12;
+            const weeks = months * 4.345;
+            const reqWords = r.remW / weeks;
+            const reqListen = r.remL / weeks;
+            const reqPractice = r.remP / weeks;
+
+            // Build weekly pace result with formatted hours
+            paceDiv.style.display = "block";
+            let html = `<strong>To reach ${r.goalLevel} in ${goalNumber} ${goalUnit} (≈ ${weeks.toFixed(1)} weeks):</strong><br>`;
+            if (r.remW > 0) html += `📚 Learn <strong>${Math.ceil(reqWords)} words</strong> per week<br>`;
+            else html += `📚 Vocabulary already complete<br>`;
+            if (r.remL > 0) html += `🎧 Listen <strong>${formatHours(reqListen)}</strong> per week<br>`;
+            else html += `🎧 Listening already complete<br>`;
+            if (r.remP > 0) html += `🗣️ Practice <strong>${formatHours(reqPractice)}</strong> per week<br>`;
+            else html += `🗣️ Practice already complete<br>`;
+            if (r.remW === 0 && r.remL === 0 && r.remP === 0) {
+                html += "🎉 You've already met all the requirements!";
+            }
+            paceDiv.innerHTML = html;
+
+            // Daily breakdown
+            let dailyHTML = `<strong>📅 Daily breakdown (based on weekly targets):</strong><br>`;
+
+            // Scenario 1: every day (7 days/week)
+            const dailyListen1 = reqListen / 7;
+            const dailyPractice1 = reqPractice / 7;
+            const dailyWords1 = (r.remW > 0) ? Math.ceil(reqWords / 7) : 0;
+
+            dailyHTML += `<em>If you study every day (7 days/week):</em><br>`;
+            if (r.remW > 0) dailyHTML += `📚 ${dailyWords1} words, `;
+            else dailyHTML += `📚 done, `;
+            if (r.remL > 0) dailyHTML += `🎧 ${formatHours(dailyListen1)}, `;
+            else dailyHTML += `🎧 done, `;
+            if (r.remP > 0) dailyHTML += `🗣️ ${formatHours(dailyPractice1)}`;
+            else dailyHTML += `🗣️ done`;
+            dailyHTML += `<br><br>`;
+
+            // Scenario 2: 4 study days + 1 rest day cycle (study 4 out of 5 days)
+            const dailyListen2 = reqListen * 5 / 28;
+            const dailyPractice2 = reqPractice * 5 / 28;
+            const dailyWords2 = (r.remW > 0) ? Math.ceil(reqWords * 5 / 28) : 0;
+
+            dailyHTML += `<em>4 study days + 1 rest day repeated (4/5 days):</em><br>`;
+            if (r.remW > 0) dailyHTML += `📚 ${dailyWords2} words, `;
+            else dailyHTML += `📚 done, `;
+            if (r.remL > 0) dailyHTML += `🎧 ${formatHours(dailyListen2)}, `;
+            else dailyHTML += `🎧 done, `;
+            if (r.remP > 0) dailyHTML += `🗣️ ${formatHours(dailyPractice2)}`;
+            else dailyHTML += `🗣️ done`;
+            dailyHTML += `<br><span style="font-size:13px;">(Rest days: 0 – take a complete break)</span>`;
+
+            dailyDiv.style.display = "block";
+            dailyDiv.innerHTML = dailyHTML;
+        }
+    </script>
+</body>
+</html>

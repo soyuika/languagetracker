@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Habit Tracker – English & Japanese</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f5f7fa;
+            padding: 1.5rem;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1.2rem;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+            padding: 1.8rem 1.5rem 2rem;
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            margin: 0.8rem 0 1.2rem;
+            flex-wrap: wrap;
+        }
+        .lang-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+        select {
+            padding: 0.5rem 1.8rem 0.5rem 0.8rem;
+            border-radius: 0.6rem;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-size: 0.95rem;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 8.825L1.175 4 2.238 2.938 6 6.7 9.763 2.937 10.825 4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+        }
+        .daily-goals {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+        }
+        .daily-goals label {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-weight: 500;
+        }
+        .daily-goals input {
+            width: 4.5rem;
+            padding: 0.3rem 0.4rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.4rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .week-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+        .week-nav button {
+            background: #e2e8f0;
+            border: none;
+            border-radius: 0.6rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .week-nav button:hover {
+            background: #cbd5e1;
+        }
+        .week-label {
+            font-weight: 700;
+            font-size: 1.1rem;
+            min-width: 200px;
+            text-align: center;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 1.8rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        th, td {
+            padding: 0.6rem 0.5rem;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f8fafc;
+            font-weight: 700;
+            color: #0f172a;
+            position: sticky;
+            top: 0;
+            background: #f1f5f9;
+        }
+        .habit-label {
+            text-align: left;
+            font-weight: 500;
+            padding-left: 0.4rem;
+        }
+        .sub-habit {
+            padding-left: 1.4rem;
+            font-weight: 400;
+            color: #334155;
+        }
+        .category-header td {
+            background: #eef2ff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.01em;
+        }
+        td input[type="number"] {
+            width: 5rem;
+            padding: 0.3rem 0.4rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.4rem;
+            text-align: center;
+            font-size: 0.9rem;
+            transition: 0.15s;
+        }
+        td input[type="number"]:focus {
+            outline: none;
+            border-color: #818cf8;
+            box-shadow: 0 0 0 3px rgba(129,140,248,0.2);
+        }
+        .checkmark {
+            display: inline-block;
+            width: 1.4rem;
+            text-align: center;
+            font-weight: bold;
+            margin-left: 0.2rem;
+            color: #10b981;
+        }
+        .total-row td {
+            font-weight: 700;
+            background: #f9fafb;
+            border-top: 2px solid #cbd5e1;
+        }
+        .goal-met {
+            background-color: #d1fae5 !important;
+            transition: background-color 0.2s;
+        }
+        .weekly-summary {
+            background: #f1f5f9;
+            border-radius: 1rem;
+            padding: 1.2rem 1.5rem;
+            margin-top: 1.2rem;
+        }
+        .weekly-summary h3 {
+            margin-bottom: 0.8rem;
+            font-size: 1.2rem;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 0.7rem 1.5rem;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #cbd5e1;
+            padding: 0.3rem 0;
+        }
+        .summary-item strong {
+            font-weight: 600;
+        }
+        .reset-btn {
+            margin-top: 1rem;
+            background: none;
+            border: 1px solid #cbd5e1;
+            padding: 0.4rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📚 Language Habit Tracker</h1>
+    <div class="settings-row">
+        <div class="lang-selector">
+            <label for="langSelect">Learning:</label>
+            <select id="langSelect">
+                <option value="en">English</option>
+                <option value="ja">Japanese</option>
+            </select>
+        </div>
+        <div class="daily-goals" id="dailyGoalInputs">
+            <label>🎯 Words <input type="number" id="goalWords" min="0" step="1" placeholder="20"></label>
+            <label>🎧 Listening (min) <input type="number" id="goalListening" min="0" step="1" placeholder="60"></label>
+            <label>📖 Practice (min) <input type="number" id="goalPractice" min="0" step="1" placeholder="120"></label>
+        </div>
+    </div>
+
+    <div class="week-nav">
+        <button id="prevWeekBtn">← Previous Week</button>
+        <span class="week-label" id="weekLabel"></span>
+        <button id="nextWeekBtn">Next Week →</button>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="habitTable">
+            <thead>
+                <tr id="dayHeaders"></tr>
+            </thead>
+            <tbody id="habitBody"></tbody>
+            <tfoot id="totalsFoot"></tfoot>
+        </table>
+    </div>
+
+    <div class="weekly-summary" id="weeklySummary">
+        <h3>📊 Weekly Totals</h3>
+        <div id="summaryContent"></div>
+        <button class="reset-btn" id="resetWeekBtn">Clear current week data</button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---- Configuration ----
+        const LANGUAGES = {
+            en: 'English',
+            ja: 'Japanese'
+        };
+
+        const HABITS = [
+            { id: 'words', label: 'Words learnt', type: 'words', goal: 20, category: 'words' },
+            { id: 'shadowing', label: 'Shadowing', type: 'minutes', goal: 15, category: 'activeListening' },
+            { id: 'transcripts', label: 'Writing transcripts', type: 'minutes', goal: 15, category: 'activeListening' },
+            { id: 'semiActive', label: 'Semi-active listening', type: 'minutes', goal: 30, category: 'activeListening' },
+            { id: 'grammar', label: 'Grammar drills', type: 'minutes', goal: 15, category: 'deliberatePractice' },
+            { id: 'readingAloud', label: 'Reading aloud', type: 'minutes', goal: 10, category: 'deliberatePractice' },
+            { id: 'reading', label: 'Reading', type: 'minutes', goal: 30, category: 'deliberatePractice' },
+            { id: 'writingTexts', label: 'Writing texts', type: 'minutes', goal: 20, category: 'deliberatePractice' },
+            { id: 'learningTexts', label: 'Learning texts', type: 'minutes', goal: 15, category: 'deliberatePractice' },
+            { id: 'rewritingSentences', label: 'Rewriting sentences', type: 'minutes', goal: 10, category: 'deliberatePractice' },
+            { id: 'summarizing', label: 'Summarizing / retelling', type: 'minutes', goal: 10, category: 'deliberatePractice' },
+            { id: 'writingSystem', label: 'Writing system', type: 'minutes', goal: 15, category: 'deliberatePractice' },
+            { id: 'minimalPairs', label: 'Minimal pairs', type: 'minutes', goal: 10, category: 'deliberatePractice' },
+            { id: 'class', label: 'Class', type: 'minutes', goal: 9999, category: 'deliberatePractice' }
+        ];
+
+        const ACTIVE_LISTENING_IDS = ['shadowing', 'transcripts', 'semiActive'];
+        const DELIBERATE_PRACTICE_IDS = [
+            'grammar', 'readingAloud', 'reading', 'writingTexts', 'learningTexts',
+            'rewritingSentences', 'summarizing', 'writingSystem', 'minimalPairs', 'class'
+        ];
+
+        // ---- State ----
+        let currentLanguage = 'en';
+        let weekOffset = 0;
+
+        // ---- Storage keys ----
+        const DATA_KEY = 'habitTrackerData_v2';
+        const GOALS_KEY = 'habitGoalSettings_v2'; // changed to avoid old hours format
+
+        function loadAllData() {
+            try {
+                const raw = localStorage.getItem(DATA_KEY);
+                return raw ? JSON.parse(raw) : { en: {}, ja: {} };
+            } catch (e) {
+                return { en: {}, ja: {} };
+            }
+        }
+
+        function saveAllData(data) {
+            localStorage.setItem(DATA_KEY, JSON.stringify(data));
+        }
+
+        function getDayData(dateStr) {
+            const all = loadAllData();
+            if (!all[currentLanguage]) all[currentLanguage] = {};
+            return all[currentLanguage][dateStr] || {};
+        }
+
+        function setDayData(dateStr, dayObj) {
+            const all = loadAllData();
+            if (!all[currentLanguage]) all[currentLanguage] = {};
+            all[currentLanguage][dateStr] = dayObj;
+            saveAllData(all);
+        }
+
+        function loadGoals() {
+            try {
+                const raw = localStorage.getItem(GOALS_KEY);
+                return raw ? JSON.parse(raw) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveGoals(goalsObj) {
+            localStorage.setItem(GOALS_KEY, JSON.stringify(goalsObj));
+        }
+
+        function getLanguageGoals() {
+            const allGoals = loadGoals();
+            return allGoals[currentLanguage] || { words: 20, listeningMinutes: 60, practiceMinutes: 120 };
+        }
+
+        function setLanguageGoals(goals) {
+            const allGoals = loadGoals();
+            allGoals[currentLanguage] = goals;
+            saveGoals(allGoals);
+        }
+
+        // ---- Date helpers ----
+        function getMonday(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = (day === 0 ? -6 : 1 - day);
+            d.setDate(d.getDate() + diff);
+            d.setHours(0,0,0,0);
+            return d;
+        }
+
+        function getWeekDates(offset) {
+            const now = new Date();
+            const monday = getMonday(now);
+            monday.setDate(monday.getDate() + offset * 7);
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(d.getDate() + i);
+                dates.push(d);
+            }
+            return dates;
+        }
+
+        function formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2,'0');
+            const d = String(date.getDate()).padStart(2,'0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatDisplayDate(date) {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // ---- Render ----
+        const dayHeadersRow = document.getElementById('dayHeaders');
+        const habitBody = document.getElementById('habitBody');
+        const totalsFoot = document.getElementById('totalsFoot');
+        const weekLabel = document.getElementById('weekLabel');
+        const summaryContent = document.getElementById('summaryContent');
+        const goalWordsInput = document.getElementById('goalWords');
+        const goalListeningInput = document.getElementById('goalListening');
+        const goalPracticeInput = document.getElementById('goalPractice');
+
+        function renderWeek() {
+            const weekDates = getWeekDates(weekOffset);
+            const dateStrs = weekDates.map(d => formatDate(d));
+
+            // Load saved goals and display
+            const savedGoals = getLanguageGoals();
+            goalWordsInput.value = savedGoals.words;
+            goalListeningInput.value = savedGoals.listeningMinutes;
+            goalPracticeInput.value = savedGoals.practiceMinutes;
+
+            // Day headers
+            const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            dayHeadersRow.innerHTML = '<th style="text-align:left; padding-left:0.5rem;">Habit</th>' +
+                weekDates.map((d, i) => {
+                    const display = `${daysOfWeek[i]}<br><small>${formatDisplayDate(d)}</small>`;
+                    return `<th>${display}</th>`;
+                }).join('');
+
+            // Week label
+            const startStr = formatDisplayDate(weekDates[0]);
+            const endStr = formatDisplayDate(weekDates[6]);
+            weekLabel.textContent = `${startStr} – ${endStr} ${weekDates[0].getFullYear()}`;
+
+            // Habit rows
+            habitBody.innerHTML = '';
+            let currentCategory = null;
+
+            HABITS.forEach(habit => {
+                if (habit.category !== currentCategory) {
+                    currentCategory = habit.category;
+                    const catNames = {
+                        words: '📝 Words',
+                        activeListening: '🎧 Active Listening',
+                        deliberatePractice: '📖 Deliberate Practice'
+                    };
+                    const catRow = document.createElement('tr');
+                    catRow.className = 'category-header';
+                    catRow.innerHTML = `<td colspan="8" style="text-align:left; font-weight:700; padding:0.5rem;">${catNames[habit.category]}</td>`;
+                    habitBody.appendChild(catRow);
+                }
+
+                const row = document.createElement('tr');
+                const labelCell = document.createElement('td');
+                labelCell.className = habit.category === 'words' ? 'habit-label' : 'habit-label sub-habit';
+                labelCell.textContent = habit.label;
+                row.appendChild(labelCell);
+
+                dateStrs.forEach(dateStr => {
+                    const cell = document.createElement('td');
+                    if (habit.id === 'words') {
+                        cell.id = `word-day-${dateStr}`;
+                    }
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = '0';
+                    input.step = habit.type === 'words' ? '1' : '1';
+                    input.placeholder = habit.type === 'words' ? '0' : 'min';
+                    input.dataset.date = dateStr;
+                    input.dataset.habit = habit.id;
+                    input.dataset.type = habit.type;
+                    input.dataset.goal = habit.goal;
+
+                    const dayData = getDayData(dateStr);
+                    const savedVal = dayData[habit.id];
+                    if (savedVal !== undefined && savedVal !== null && savedVal !== '') {
+                        input.value = savedVal;
+                    }
+
+                    const checkSpan = document.createElement('span');
+                    checkSpan.className = 'checkmark';
+                    checkSpan.dataset.habit = habit.id;
+                    checkSpan.dataset.date = dateStr;
+
+                    cell.appendChild(input);
+                    cell.appendChild(checkSpan);
+                    row.appendChild(cell);
+                });
+
+                habitBody.appendChild(row);
+            });
+
+            // Totals rows
+            totalsFoot.innerHTML = '';
+            const activeRow = document.createElement('tr');
+            activeRow.className = 'total-row';
+            activeRow.innerHTML = '<td style="text-align:left;">⏱️ Active Listening (hours)</td>';
+            const deliberateRow = document.createElement('tr');
+            deliberateRow.className = 'total-row';
+            deliberateRow.innerHTML = '<td style="text-align:left;">⏱️ Deliberate Practice (hours)</td>';
+
+            dateStrs.forEach(dateStr => {
+                const activeCell = document.createElement('td');
+                activeCell.id = `total-active-${dateStr}`;
+                activeCell.textContent = '0.0';
+                activeRow.appendChild(activeCell);
+
+                const deliberateCell = document.createElement('td');
+                deliberateCell.id = `total-deliberate-${dateStr}`;
+                deliberateCell.textContent = '0.0';
+                deliberateRow.appendChild(deliberateCell);
+            });
+
+            totalsFoot.appendChild(activeRow);
+            totalsFoot.appendChild(deliberateRow);
+
+            // Attach listeners
+            document.querySelectorAll('#habitTable input[type="number"]').forEach(input => {
+                input.addEventListener('input', handleInputChange);
+            });
+
+            // Update all days
+            dateStrs.forEach(dateStr => updateDay(dateStr));
+            applyGoalHighlights();
+            updateWeeklySummary();
+        }
+
+        function handleInputChange(e) {
+            const input = e.target;
+            const dateStr = input.dataset.date;
+            const habitId = input.dataset.habit;
+            const goal = Number(input.dataset.goal);
+
+            let value = input.value.trim();
+            let parsed = (value === '') ? null : Number(value);
+            if (parsed !== null && isNaN(parsed)) parsed = null;
+
+            const td = input.parentElement;
+            const checkSpan = td.querySelector('.checkmark');
+            if (checkSpan) {
+                const met = (parsed !== null && parsed >= goal && goal > 0);
+                checkSpan.textContent = met ? '✓' : '';
+            }
+
+            const dayData = getDayData(dateStr);
+            dayData[habitId] = parsed;
+            setDayData(dateStr, dayData);
+
+            updateDayTotals(dateStr);
+            applyGoalHighlights();
+            updateWeeklySummary();
+        }
+
+        function updateDay(dateStr) {
+            const inputs = document.querySelectorAll(`input[data-date="${dateStr}"]`);
+            inputs.forEach(input => {
+                const habitId = input.dataset.habit;
+                const goal = Number(input.dataset.goal);
+                let value = input.value.trim();
+                let parsed = (value === '') ? null : Number(value);
+                if (parsed !== null && isNaN(parsed)) parsed = null;
+
+                const td = input.parentElement;
+                const checkSpan = td.querySelector('.checkmark');
+                if (checkSpan) {
+                    const met = (parsed !== null && parsed >= goal && goal > 0);
+                    checkSpan.textContent = met ? '✓' : '';
+                }
+            });
+
+            updateDayTotals(dateStr);
+            applyGoalHighlights();
+        }
+
+        function updateDayTotals(dateStr) {
+            const dayData = getDayData(dateStr);
+            let activeMins = 0;
+            ACTIVE_LISTENING_IDS.forEach(id => {
+                const val = dayData[id];
+                if (typeof val === 'number' && !isNaN(val)) activeMins += val;
+            });
+            let deliberateMins = 0;
+            DELIBERATE_PRACTICE_IDS.forEach(id => {
+                const val = dayData[id];
+                if (typeof val === 'number' && !isNaN(val)) deliberateMins += val;
+            });
+
+            const activeHours = (activeMins / 60).toFixed(1);
+            const deliberateHours = (deliberateMins / 60).toFixed(1);
+
+            const activeCell = document.getElementById(`total-active-${dateStr}`);
+            if (activeCell) activeCell.textContent = activeHours;
+            const deliberateCell = document.getElementById(`total-deliberate-${dateStr}`);
+            if (deliberateCell) deliberateCell.textContent = deliberateHours;
+        }
+
+        function applyGoalHighlights() {
+            const goals = getLanguageGoals();
+            const weekDates = getWeekDates(weekOffset);
+            const dateStrs = weekDates.map(d => formatDate(d));
+
+            dateStrs.forEach(dateStr => {
+                const dayData = getDayData(dateStr);
+                const totalWords = (typeof dayData.words === 'number') ? dayData.words : 0;
+                let activeMins = 0;
+                ACTIVE_LISTENING_IDS.forEach(id => {
+                    const v = dayData[id];
+                    if (typeof v === 'number') activeMins += v;
+                });
+                let deliberateMins = 0;
+                DELIBERATE_PRACTICE_IDS.forEach(id => {
+                    const v = dayData[id];
+                    if (typeof v === 'number') deliberateMins += v;
+                });
+
+                // Words cell highlight
+                const wordCell = document.getElementById(`word-day-${dateStr}`);
+                if (wordCell) {
+                    if (totalWords >= goals.words) {
+                        wordCell.classList.add('goal-met');
+                    } else {
+                        wordCell.classList.remove('goal-met');
+                    }
+                }
+
+                // Active listening total highlight (comparison in minutes)
+                const activeTotalCell = document.getElementById(`total-active-${dateStr}`);
+                if (activeTotalCell) {
+                    if (activeMins >= goals.listeningMinutes) {
+                        activeTotalCell.classList.add('goal-met');
+                    } else {
+                        activeTotalCell.classList.remove('goal-met');
+                    }
+                }
+
+                // Deliberate practice total highlight (comparison in minutes)
+                const deliberateTotalCell = document.getElementById(`total-deliberate-${dateStr}`);
+                if (deliberateTotalCell) {
+                    if (deliberateMins >= goals.practiceMinutes) {
+                        deliberateTotalCell.classList.add('goal-met');
+                    } else {
+                        deliberateTotalCell.classList.remove('goal-met');
+                    }
+                }
+            });
+        }
+
+        function updateWeeklySummary() {
+            const weekDates = getWeekDates(weekOffset);
+            const dateStrs = weekDates.map(d => formatDate(d));
+            const all = loadAllData();
+            const langData = all[currentLanguage] || {};
+
+            const weeklySums = {};
+            HABITS.forEach(h => { weeklySums[h.id] = 0; });
+            let totalActiveMins = 0;
+            let totalDeliberateMins = 0;
+            let totalWords = 0;
+
+            dateStrs.forEach(dateStr => {
+                const day = langData[dateStr] || {};
+                HABITS.forEach(h => {
+                    const val = day[h.id];
+                    if (typeof val === 'number' && !isNaN(val)) {
+                        weeklySums[h.id] += val;
+                    }
+                });
+                ACTIVE_LISTENING_IDS.forEach(id => {
+                    const val = day[id];
+                    if (typeof val === 'number') totalActiveMins += val;
+                });
+                DELIBERATE_PRACTICE_IDS.forEach(id => {
+                    const val = day[id];
+                    if (typeof val === 'number') totalDeliberateMins += val;
+                });
+                if (typeof day.words === 'number') totalWords += day.words;
+            });
+
+            const activeHours = (totalActiveMins / 60).toFixed(1);
+            const deliberateHours = (totalDeliberateMins / 60).toFixed(1);
+
+            let html = '<div class="summary-grid">';
+            html += `<div class="summary-item"><span>📝 Words learnt</span> <strong>${totalWords}</strong></div>`;
+            html += `<div class="summary-item"><span>🎧 Active listening</span> <strong>${activeHours} h</strong></div>`;
+            html += `<div class="summary-item"><span>📖 Deliberate practice</span> <strong>${deliberateHours} h</strong></div>`;
+            HABITS.forEach(h => {
+                if (h.id === 'words') return;
+                const unit = h.type === 'minutes' ? 'min' : '';
+                html += `<div class="summary-item"><span style="padding-left:0.8rem;">• ${h.label}</span> <strong>${weeklySums[h.id]} ${unit}</strong></div>`;
+            });
+            html += '</div>';
+            summaryContent.innerHTML = html;
+        }
+
+        // ---- Goal input handlers ----
+        function handleGoalChange() {
+            const words = Number(goalWordsInput.value) || 0;
+            const listening = Number(goalListeningInput.value) || 0;
+            const practice = Number(goalPracticeInput.value) || 0;
+            const goals = {
+                words: words,
+                listeningMinutes: listening,
+                practiceMinutes: practice
+            };
+            setLanguageGoals(goals);
+            applyGoalHighlights();
+        }
+
+        goalWordsInput.addEventListener('input', handleGoalChange);
+        goalListeningInput.addEventListener('input', handleGoalChange);
+        goalPracticeInput.addEventListener('input', handleGoalChange);
+
+        // ---- Week navigation ----
+        document.getElementById('prevWeekBtn').addEventListener('click', () => {
+            weekOffset--;
+            renderWeek();
+        });
+        document.getElementById('nextWeekBtn').addEventListener('click', () => {
+            weekOffset++;
+            renderWeek();
+        });
+
+        // ---- Language switch ----
+        document.getElementById('langSelect').addEventListener('change', (e) => {
+            currentLanguage = e.target.value;
+            renderWeek();
+        });
+
+        // ---- Reset current week ----
+        document.getElementById('resetWeekBtn').addEventListener('click', () => {
+            if (confirm('Delete all entries for the current week? This cannot be undone.')) {
+                const weekDates = getWeekDates(weekOffset);
+                const all = loadAllData();
+                if (!all[currentLanguage]) all[currentLanguage] = {};
+                weekDates.forEach(d => {
+                    const dateStr = formatDate(d);
+                    delete all[currentLanguage][dateStr];
+                });
+                saveAllData(all);
+                renderWeek();
+            }
+        });
+
+        // Initial render
+        renderWeek();
+    })();
+</script>
+</body>
+</html>
