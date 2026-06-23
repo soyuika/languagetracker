@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>B2+ Speaking Vault · Opinions & Open‑ended</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f4f7fe 0%, #e9eefa 100%);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+    }
+
+    .prompt-container {
+      max-width: 920px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .prompt-card {
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(2px);
+      border-radius: 2.5rem;
+      box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.05);
+      padding: 2rem 2rem 2.25rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+
+    .vault-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #e2e9f2;
+      padding-bottom: 1.2rem;
+    }
+
+    .vault-header h1 {
+      font-size: 1.9rem;
+      letter-spacing: -0.3px;
+      background: linear-gradient(135deg, #1F2B48, #2C3E66);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .badge-count {
+      display: inline-block;
+      background: #eef2fa;
+      padding: 0.25rem 0.9rem;
+      border-radius: 60px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #1f3a6b;
+      margin-top: 0.3rem;
+    }
+
+    /* category toggle (two buttons) */
+    .toggle-section {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1.2rem 0 1rem;
+      flex-wrap: wrap;
+    }
+
+    .cat-btn {
+      background: #f0f3fa;
+      border: none;
+      padding: 0.6rem 1.6rem;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #1e2f48;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cat-btn.active {
+      background: #1f2f4f;
+      color: white;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+    }
+
+    .cat-btn:hover:not(.active) {
+      background: #e2e8f5;
+      transform: translateY(-1px);
+    }
+
+    /* topic showcase */
+    .topic-showcase {
+      margin: 1rem 0 1.8rem;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px dashed #dce5ef;
+    }
+
+    .category-badge {
+      background: #eef2ff;
+      color: #1e3a8a;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0.3rem 1rem;
+      border-radius: 40px;
+      display: inline-block;
+    }
+
+    .topic-id {
+      font-family: 'SF Mono', monospace;
+      font-size: 0.8rem;
+      background: #f5f7fb;
+      padding: 0.25rem 0.8rem;
+      border-radius: 40px;
+      color: #2c3e66;
+      font-weight: 500;
+    }
+
+    .question-text {
+      font-size: 1.65rem;
+      line-height: 1.4;
+      font-weight: 520;
+      color: #0a1c2f;
+      margin: 1rem 0 0.6rem;
+      word-break: break-word;
+      background: #ffffff;
+      padding: 0.2rem 0;
+      border-radius: 24px;
+    }
+
+    @media (max-width: 640px) {
+      .question-text {
+        font-size: 1.35rem;
+        line-height: 1.4;
+      }
+      .prompt-card {
+        padding: 1.5rem;
+      }
+      .vault-header h1 {
+        font-size: 1.6rem;
+      }
+    }
+
+    .action-area {
+      display: flex;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+
+    .randomize-btn {
+      background: #1f2f4f;
+      border: none;
+      padding: 0.9rem 2.2rem;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      transition: 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+    }
+
+    .randomize-btn:hover {
+      background: #13253f;
+      transform: scale(1.02);
+      box-shadow: 0 12px 22px rgba(0, 0, 0, 0.15);
+    }
+
+    .randomize-btn:active {
+      transform: scale(0.97);
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: #4b5e7c;
+      border-top: 1px solid rgba(0,0,0,0.05);
+      padding-top: 1.2rem;
+    }
+
+    @keyframes fadeSlide {
+      0% { opacity: 0; transform: translateY(6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .topic-showcase {
+      animation: fadeSlide 0.3s ease-out;
+    }
+  </style>
+</head>
+<body>
+
+<div class="prompt-container">
+  <div class="prompt-card">
+    <div class="vault-header">
+      <h1>🎤 B2+ Speaking Vault</h1>
+      <div class="badge-count" id="totalCountBadge">📋 100 topics · opinions & debates</div>
+    </div>
+
+    <!-- toggle between two categories -->
+    <div class="toggle-section">
+      <button class="cat-btn active" id="opinionTabBtn">💬 Opinions & Debates</button>
+      <button class="cat-btn" id="openTabBtn">✨ Open-ended Questions</button>
+    </div>
+
+    <!-- dynamic topic display -->
+    <div class="topic-showcase" id="topicShowcase">
+      <div class="meta-row">
+        <span class="category-badge" id="topicCategory">Opinions & Debates</span>
+        <span class="topic-id" id="topicIndex">#001</span>
+      </div>
+      <div class="question-text" id="topicText">
+        Click the button to generate a random prompt.
+      </div>
+    </div>
+
+    <div class="action-area">
+      <button class="randomize-btn" id="randomBtn">
+        <span class="refresh-icon">🎲</span> Random topic
+      </button>
+    </div>
+    <div class="footer-note">
+      🧠 200+ high-quality B2+ questions — perfect for essays, debates & speaking practice
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // 1) OPINIONS & DEBATES (original 100 exam prompts)
+  // ============================================================
+  const opinionsList = [
+    { id: 1, category: "Education & Learning", text: "Should homework be banned?" },
+    { id: 2, category: "Education & Learning", text: "Are university degrees still necessary for success?" },
+    { id: 3, category: "Education & Learning", text: "Should life skills (e.g., cooking, taxes) be taught in school?" },
+    { id: 4, category: "Education & Learning", text: "Is traditional classroom learning better than online learning?" },
+    { id: 5, category: "Education & Learning", text: "Should students be graded on effort rather than results?" },
+    { id: 6, category: "Education & Learning", text: "Are single-sex schools beneficial or outdated?" },
+    { id: 7, category: "Education & Learning", text: "Should foreign languages be compulsory from primary school?" },
+    { id: 8, category: "Education & Learning", text: "Is the focus on standardized testing harmful to education?" },
+    { id: 9, category: "Education & Learning", text: "Should schools teach financial literacy as a core subject?" },
+    { id: 10, category: "Education & Learning", text: "Is the gap year a valuable experience or a waste of time?" },
+    { id: 11, category: "Education & Learning", text: "Should students be allowed to grade their teachers?" },
+    { id: 12, category: "Education & Learning", text: "Does technology in the classroom distract more than it helps?" },
+    { id: 13, category: "Education & Learning", text: "Should higher education be free for everyone?" },
+    { id: 14, category: "Education & Learning", text: "Is memorization an outdated learning method?" },
+    { id: 15, category: "Education & Learning", text: "Should schools eliminate sports to focus on academics?" },
+    { id: 16, category: "Technology & Social Media", text: "Is social media harmful to mental health?" },
+    { id: 17, category: "Technology & Social Media", text: "Should smartphones be banned in public places like restaurants and theaters?" },
+    { id: 18, category: "Technology & Social Media", text: "Will artificial intelligence (AI) do more harm than good?" },
+    { id: 19, category: "Technology & Social Media", text: "Is the internet making us less socially engaged?" },
+    { id: 20, category: "Technology & Social Media", text: "Should children under 13 be banned from social media?" },
+    { id: 21, category: "Technology & Social Media", text: "Does technology make us more productive or more distracted?" },
+    { id: 22, category: "Technology & Social Media", text: "Should governments have the right to monitor online activity?" },
+    { id: 23, category: "Technology & Social Media", text: "Is remote work better for employees and the environment?" },
+    { id: 24, category: "Technology & Social Media", text: "Have video games become a harmful addiction for young people?" },
+    { id: 25, category: "Technology & Social Media", text: "Should social media companies be responsible for fake news?" },
+    { id: 26, category: "Technology & Social Media", text: "Is our over-reliance on search engines damaging our memory?" },
+    { id: 27, category: "Technology & Social Media", text: "Will automation cause more unemployment than it solves?" },
+    { id: 28, category: "Technology & Social Media", text: "Should schools use AI-powered grading systems?" },
+    { id: 29, category: "Technology & Social Media", text: "Is online dating a positive or negative development?" },
+    { id: 30, category: "Technology & Social Media", text: "Does screen time before bed significantly harm our health?" },
+    { id: 31, category: "Environment & Urban Life", text: "Is it too late to stop climate change, or can we still make a difference?" },
+    { id: 32, category: "Environment & Urban Life", text: "Should single-use plastics be completely banned?" },
+    { id: 33, category: "Environment & Urban Life", text: "Is the meat industry the biggest threat to the environment?" },
+    { id: 34, category: "Environment & Urban Life", text: "Should governments ban private cars in city centers?" },
+    { id: 35, category: "Environment & Urban Life", text: "Is flying for tourism morally acceptable?" },
+    { id: 36, category: "Environment & Urban Life", text: "Should plastic packaging be taxed heavily?" },
+    { id: 37, category: "Environment & Urban Life", text: "Are electric vehicles the true solution to pollution?" },
+    { id: 38, category: "Environment & Urban Life", text: "Should fast fashion be illegal?" },
+    { id: 39, category: "Environment & Urban Life", text: "Is individual action (recycling, etc.) pointless without corporate change?" },
+    { id: 40, category: "Environment & Urban Life", text: "Should countries pay to relocate citizens from sinking islands?" },
+    { id: 41, category: "Environment & Urban Life", text: "Is it better to build more roads or more public transport?" },
+    { id: 42, category: "Environment & Urban Life", text: "Should we ban all non-essential flights?" },
+    { id: 43, category: "Environment & Urban Life", text: "Is nuclear energy a necessary evil for a green future?" },
+    { id: 44, category: "Environment & Urban Life", text: "Should water be privatized or publicly managed?" },
+    { id: 45, category: "Environment & Urban Life", text: "Will vertical farming solve future food crises?" },
+    { id: 46, category: "Work, Business & Success", text: "Is a four-day work week feasible for all industries?" },
+    { id: 47, category: "Work, Business & Success", text: "Should employees be tracked by their computers at home?" },
+    { id: 48, category: "Work, Business & Success", text: "Is \"following your passion\" bad career advice?" },
+    { id: 49, category: "Work, Business & Success", text: "Should companies have a quota for hiring diverse candidates?" },
+    { id: 50, category: "Work, Business & Success", text: "Is the traditional 9-to-5 job becoming obsolete?" },
+    { id: 51, category: "Work, Business & Success", text: "Should unpaid internships be banned?" },
+    { id: 52, category: "Work, Business & Success", text: "Does job-hopping help or hurt your career?" },
+    { id: 53, category: "Work, Business & Success", text: "Should salaries be transparent within a company?" },
+    { id: 54, category: "Work, Business & Success", text: "Is entrepreneurship overrated compared to stable employment?" },
+    { id: 55, category: "Work, Business & Success", text: "Should companies be legally required to allow flexible hours?" },
+    { id: 56, category: "Work, Business & Success", text: "Is the \"gig economy\" (Uber, Fiverr) exploiting workers?" },
+    { id: 57, category: "Work, Business & Success", text: "Should work emails be banned after 6 PM?" },
+    { id: 58, category: "Work, Business & Success", text: "Is it better to work for a small company or a large corporation?" },
+    { id: 59, category: "Work, Business & Success", text: "Should bosses be required to have emotional intelligence training?" },
+    { id: 60, category: "Work, Business & Success", text: "Is lifelong loyalty to one company unrealistic today?" },
+    { id: 61, category: "Health, Well-being & Lifestyle", text: "Is sugar as dangerous as alcohol or tobacco?" },
+    { id: 62, category: "Health, Well-being & Lifestyle", text: "Should alternative medicine be covered by public health insurance?" },
+    { id: 63, category: "Health, Well-being & Lifestyle", text: "Is the BMI scale an outdated measure of health?" },
+    { id: 64, category: "Health, Well-being & Lifestyle", text: "Should governments tax junk food to fight obesity?" },
+    { id: 65, category: "Health, Well-being & Lifestyle", text: "Is the wellness industry creating unnecessary anxiety?" },
+    { id: 66, category: "Health, Well-being & Lifestyle", text: "Should recreational drugs be decriminalized?" },
+    { id: 67, category: "Health, Well-being & Lifestyle", text: "Is sleep more important than exercise for health?" },
+    { id: 68, category: "Health, Well-being & Lifestyle", text: "Should mental health days be treated like sick days at work/school?" },
+    { id: 69, category: "Health, Well-being & Lifestyle", text: "Is cosmetic surgery a personal choice or a societal pressure?" },
+    { id: 70, category: "Health, Well-being & Lifestyle", text: "Should employers force employees to take vacation days?" },
+    { id: 71, category: "Health, Well-being & Lifestyle", text: "Is the Mediterranean diet the best, or just a trend?" },
+    { id: 72, category: "Health, Well-being & Lifestyle", text: "Should calorie counts be mandatory on all restaurant menus?" },
+    { id: 73, category: "Health, Well-being & Lifestyle", text: "Is obsessive fitness tracking harmful?" },
+    { id: 74, category: "Health, Well-being & Lifestyle", text: "Should governments legalize euthanasia (right to die)?" },
+    { id: 75, category: "Health, Well-being & Lifestyle", text: "Is organized religion beneficial for mental health?" },
+    { id: 76, category: "Media, Arts & Entertainment", text: "Is news media deliberately biased, or are mistakes inevitable?" },
+    { id: 77, category: "Media, Arts & Entertainment", text: "Should violent video games be censored?" },
+    { id: 78, category: "Media, Arts & Entertainment", text: "Is reality TV harmful to society's values?" },
+    { id: 79, category: "Media, Arts & Entertainment", text: "Should governments fund the arts (theatre, museums) during a recession?" },
+    { id: 80, category: "Media, Arts & Entertainment", text: "Is sports a waste of money compared to art education?" },
+    { id: 81, category: "Media, Arts & Entertainment", text: "Should celebrities be role models for young people?" },
+    { id: 82, category: "Media, Arts & Entertainment", text: "Is the film industry's focus on sequels and remakes killing creativity?" },
+    { id: 83, category: "Media, Arts & Entertainment", text: "Should influencers be regulated like traditional advertisers?" },
+    { id: 84, category: "Media, Arts & Entertainment", text: "Is the death of print media a loss for democracy?" },
+    { id: 85, category: "Media, Arts & Entertainment", text: "Should museums return artifacts to their countries of origin?" },
+    { id: 86, category: "Media, Arts & Entertainment", text: "Is streaming making music less valuable?" },
+    { id: 87, category: "Media, Arts & Entertainment", text: "Should violent lyrics in music be censored on public radio?" },
+    { id: 88, category: "Media, Arts & Entertainment", text: "Is cultural appropriation in art a real problem?" },
+    { id: 89, category: "Media, Arts & Entertainment", text: "Should professional athletes be paid less than doctors?" },
+    { id: 90, category: "Media, Arts & Entertainment", text: "Is the Oscars/Grammy awards ceremony outdated?" },
+    { id: 91, category: "Society, Law & Ethics", text: "Should the voting age be lowered to 16?" },
+    { id: 92, category: "Society, Law & Ethics", text: "Is the death penalty ever justified?" },
+    { id: 93, category: "Society, Law & Ethics", text: "Should unpaid community service replace prison for minor crimes?" },
+    { id: 94, category: "Society, Law & Ethics", text: "Is the purpose of prison punishment or rehabilitation?" },
+    { id: 95, category: "Society, Law & Ethics", text: "Should parents be punished for their children's crimes?" },
+    { id: 96, category: "Society, Law & Ethics", text: "Is universal basic income (UBI) an inevitable solution to poverty?" },
+    { id: 97, category: "Society, Law & Ethics", text: "Should hate speech be protected under free speech?" },
+    { id: 98, category: "Society, Law & Ethics", text: "Is marriage an outdated institution in modern society?" },
+    { id: 99, category: "Society, Law & Ethics", text: "Should human cloning be legalized for medical purposes?" },
+    { id: 100, category: "Society, Law & Ethics", text: "Is patriotism the same as nationalism, and is one dangerous?" }
+  ];
+
+  // ============================================================
+  // 2) OPEN-ENDED QUESTIONS (100 personal, reflective, "why/describe")
+  // ============================================================
+  const openEndedList = [
+    { id: 1, category: "Personal Experience", text: "What are the downsides of your current job or studies?" },
+    { id: 2, category: "Personal Experience", text: "Describe a recent purchase that disappointed you. Why?" },
+    { id: 3, category: "Personal Experience", text: "What is the best decision you have made in the last five years?" },
+    { id: 4, category: "Personal Experience", text: "When have you felt completely out of your comfort zone?" },
+    { id: 5, category: "Personal Experience", text: "Describe a skill you tried to learn but gave up on." },
+    { id: 6, category: "Personal Experience", text: "What is the most useful piece of advice someone has given you?" },
+    { id: 7, category: "Personal Experience", text: "Describe a time when you changed your opinion about something important." },
+    { id: 8, category: "Personal Experience", text: "What does a typical stressful day look like for you?" },
+    { id: 9, category: "Personal Experience", text: "Describe a possession you would save from a fire (apart from people/pets)." },
+    { id: 10, category: "Personal Experience", text: "What is something you believed as a child that turned out to be wrong?" },
+    { id: 11, category: "Personal Experience", text: "Describe a habit you have that you wish you could break." },
+    { id: 12, category: "Personal Experience", text: "What is the biggest lie you have told to avoid trouble?" },
+    { id: 13, category: "Personal Experience", text: "Describe a time when you helped a stranger." },
+    { id: 14, category: "Personal Experience", text: "What is something you are unexpectedly good at?" },
+    { id: 15, category: "Personal Experience", text: "Describe a moment when you felt very proud of yourself." },
+    { id: 16, category: "Work & Studies", text: "What are the most boring tasks in your current job or studies?" },
+    { id: 17, category: "Work & Studies", text: "Why is it hard for young people to choose a career path?" },
+    { id: 18, category: "Work & Studies", text: "Describe a teacher or boss who had a negative impact on you." },
+    { id: 19, category: "Work & Studies", text: "What would you change about your school or workplace if you could?" },
+    { id: 20, category: "Work & Studies", text: "Why do some people hate teamwork?" },
+    { id: 21, category: "Work & Studies", text: "Describe a time when you failed an important task. What happened?" },
+    { id: 22, category: "Work & Studies", text: "What is the difference between a good boss and a bad boss?" },
+    { id: 23, category: "Work & Studies", text: "Why is work-life balance difficult to achieve in many professions?" },
+    { id: 24, category: "Work & Studies", text: "Describe a job you would never do, even for more money." },
+    { id: 25, category: "Work & Studies", text: "How has your field of study changed in the last ten years?" },
+    { id: 26, category: "Work & Studies", text: "What is the most overrated profession in your opinion?" },
+    { id: 27, category: "Work & Studies", text: "Describe a time when you had to deal with a difficult colleague or classmate." },
+    { id: 28, category: "Work & Studies", text: "Why do so many people feel imposter syndrome at work?" },
+    { id: 29, category: "Work & Studies", text: "What is the biggest risk you have taken in your career or education?" },
+    { id: 30, category: "Work & Studies", text: "Describe an achievement that required more luck than skill." },
+    { id: 31, category: "Society & Modern Life", text: "Why is it hard for people to admit they are wrong?" },
+    { id: 32, category: "Society & Modern Life", text: "Describe a social norm that you think is outdated." },
+    { id: 33, category: "Society & Modern Life", text: "Why do so many people feel lonely despite being constantly connected?" },
+    { id: 34, category: "Society & Modern Life", text: "What is something young people complain about that you find unreasonable?" },
+    { id: 35, category: "Society & Modern Life", text: "Describe a time when you felt pressure to follow the crowd." },
+    { id: 36, category: "Society & Modern Life", text: "Why is it difficult to make friends as an adult?" },
+    { id: 37, category: "Society & Modern Life", text: "Describe a tradition from your culture that you dislike." },
+    { id: 38, category: "Society & Modern Life", text: "Why do some people resist change even when it is beneficial?" },
+    { id: 39, category: "Society & Modern Life", text: "What is the most annoying thing about public transportation in your city?" },
+    { id: 40, category: "Society & Modern Life", text: "Describe a situation where being honest made things worse." },
+    { id: 41, category: "Society & Modern Life", text: "Why do people often vote against their own interests?" },
+    { id: 42, category: "Society & Modern Life", text: "Describe a common rule or law that you think should be removed." },
+    { id: 43, category: "Society & Modern Life", text: "Why is it hard to save money for most people?" },
+    { id: 44, category: "Society & Modern Life", text: "Describe a generation gap you have witnessed recently." },
+    { id: 45, category: "Society & Modern Life", text: "What is something expensive that is actually worth the money?" },
+    { id: 46, category: "Technology & Media", text: "Why is it so hard to stop checking your phone?" },
+    { id: 47, category: "Technology & Media", text: "Describe a way technology has made your life more complicated." },
+    { id: 48, category: "Technology & Media", text: "What is the biggest disadvantage of working from home?" },
+    { id: 49, category: "Technology & Media", text: "Why do people believe fake news even when it is clearly false?" },
+    { id: 50, category: "Technology & Media", text: "Describe an app you deleted and why." },
+    { id: 51, category: "Technology & Media", text: "Why is online shopping sometimes more stressful than convenient?" },
+    { id: 52, category: "Technology & Media", text: "Describe a time when technology failed you at the worst moment." },
+    { id: 53, category: "Technology & Media", text: "What is the most annoying trend on social media right now?" },
+    { id: 54, category: "Technology & Media", text: "Why do people compare themselves to others more online than in real life?" },
+    { id: 55, category: "Technology & Media", text: "Describe a technological device you cannot live without (and why)." },
+    { id: 56, category: "Technology & Media", text: "Why are some people afraid of artificial intelligence?" },
+    { id: 57, category: "Technology & Media", text: "Describe a time when you regretted posting something online." },
+    { id: 58, category: "Technology & Media", text: "What is the worst thing about video calls?" },
+    { id: 59, category: "Technology & Media", text: "Why do people still use email instead of instant messaging?" },
+    { id: 60, category: "Technology & Media", text: "Describe a way that streaming has changed your viewing habits." },
+    { id: 61, category: "Environment & Urban Living", text: "Why is climate change hard to solve despite widespread agreement?" },
+    { id: 62, category: "Environment & Urban Living", text: "Describe a way your city could be made more environmentally friendly." },
+    { id: 63, category: "Environment & Urban Living", text: "Why do people continue to buy single-use plastic products?" },
+    { id: 64, category: "Environment & Urban Living", text: "What is the most frustrating thing about public transport where you live?" },
+    { id: 65, category: "Environment & Urban Living", text: "Describe a time when you felt nature was more powerful than humans." },
+    { id: 66, category: "Environment & Urban Living", text: "Why is it difficult to give up meat for many people?" },
+    { id: 67, category: "Environment & Urban Living", text: "Describe a form of pollution that is overlooked." },
+    { id: 68, category: "Environment & Urban Living", text: "Why are electric cars not a perfect solution?" },
+    { id: 69, category: "Environment & Urban Living", text: "Describe a place in your country that has been damaged by tourism." },
+    { id: 70, category: "Environment & Urban Living", text: "Why do some people deny climate science?" },
+    { id: 71, category: "Environment & Urban Living", text: "Describe a small environmental change you have made that was surprisingly hard." },
+    { id: 72, category: "Environment & Urban Living", text: "Why is recycling often ineffective in practice?" },
+    { id: 73, category: "Environment & Urban Living", text: "Describe a time when extreme weather affected your plans." },
+    { id: 74, category: "Environment & Urban Living", text: "Why do people still prefer driving over cycling or walking?" },
+    { id: 75, category: "Environment & Urban Living", text: "Describe a natural landscape you have seen that might disappear in your lifetime." },
+    { id: 76, category: "Health & Psychology", text: "Why is it so hard to wake up early?" },
+    { id: 77, category: "Health & Psychology", text: "Describe a food you used to hate but now enjoy." },
+    { id: 78, category: "Health & Psychology", text: "Why do people often fail at their New Year’s resolutions?" },
+    { id: 79, category: "Health & Psychology", text: "Describe a time when stress affected your physical health." },
+    { id: 80, category: "Health & Psychology", text: "Why is it difficult to maintain a healthy diet when busy?" },
+    { id: 81, category: "Health & Psychology", text: "Describe a bad health habit you have successfully broken." },
+    { id: 82, category: "Health & Psychology", text: "Why do some people enjoy being scared (horror movies, roller coasters)?" },
+    { id: 83, category: "Health & Psychology", text: "Describe a time when you ignored a health warning and regretted it." },
+    { id: 84, category: "Health & Psychology", text: "Why are energy drinks so popular despite known risks?" },
+    { id: 85, category: "Health & Psychology", text: "Describe a diet or fitness trend that you think is nonsense." },
+    { id: 86, category: "Health & Psychology", text: "Why is it hard to ask for help with mental health?" },
+    { id: 87, category: "Health & Psychology", text: "Describe a time when you felt completely exhausted for several days." },
+    { id: 88, category: "Health & Psychology", text: "Why do people procrastinate visiting the doctor?" },
+    { id: 89, category: "Health & Psychology", text: "Describe a medicine or remedy that surprised you with its effectiveness." },
+    { id: 90, category: "Health & Psychology", text: "Why is sleep often the first thing people sacrifice?" },
+    { id: 91, category: "Hypothetical & Abstract", text: "If you could change one law in your country, what would it be and why?" },
+    { id: 92, category: "Hypothetical & Abstract", text: "Describe a historical event you would like to witness (without changing it)." },
+    { id: 93, category: "Hypothetical & Abstract", text: "Why would life be better or worse without the internet for a month?" },
+    { id: 94, category: "Hypothetical & Abstract", text: "If you had to leave your home country forever, where would you go and why?" },
+    { id: 95, category: "Hypothetical & Abstract", text: "Describe a skill you would teach to every teenager if you could." },
+    { id: 96, category: "Hypothetical & Abstract", text: "Why might it be a bad idea to live forever?" },
+    { id: 97, category: "Hypothetical & Abstract", text: "If you could eliminate one emotion entirely, which one would you choose?" },
+    { id: 98, category: "Hypothetical & Abstract", text: "Describe a product that should never have been invented." },
+    { id: 99, category: "Hypothetical & Abstract", text: "Why would you or would you not want to know the exact date of your death?" },
+    { id: 100, category: "Hypothetical & Abstract", text: "If you could have a conversation with your 80-year-old self, what would you ask?" }
+  ];
+
+  // active data state
+  let activeList = opinionsList;        // default "Opinions & Debates"
+  let activeType = "opinions";          // 'opinions' or 'open'
+
+  // DOM elements
+  const opinionBtn = document.getElementById('opinionTabBtn');
+  const openBtn = document.getElementById('openTabBtn');
+  const randomBtn = document.getElementById('randomBtn');
+  const categorySpan = document.getElementById('topicCategory');
+  const indexSpan = document.getElementById('topicIndex');
+  const topicTextDiv = document.getElementById('topicText');
+  const totalBadge = document.getElementById('totalCountBadge');
+  const showcaseDiv = document.getElementById('topicShowcase');
+
+  function animateCard() {
+    showcaseDiv.style.animation = 'none';
+    showcaseDiv.offsetHeight;
+    showcaseDiv.style.animation = 'fadeSlide 0.3s ease-out';
+  }
+
+  function updateBadge() {
+    const count = activeList.length;
+    if (activeType === 'opinions') {
+      totalBadge.innerHTML = `📋 ${count} topics · opinions & debates`;
+    } else {
+      totalBadge.innerHTML = `✨ ${count} topics · open-ended questions`;
+    }
+  }
+
+  function displayRandomTopic() {
+    if (!activeList.length) return;
+    const randomIndex = Math.floor(Math.random() * activeList.length);
+    const topic = activeList[randomIndex];
+    // For opinions: we show sub-category like "Education & Learning"
+    // For open-ended: category is like "Personal Experience" etc.
+    categorySpan.textContent = topic.category;
+    indexSpan.textContent = `#${String(topic.id).padStart(3, '0')}`;
+    topicTextDiv.textContent = topic.text;
+    animateCard();
+  }
+
+  function setActiveCategory(type) {
+    if (type === 'opinions') {
+      activeList = opinionsList;
+      activeType = 'opinions';
+      opinionBtn.classList.add('active');
+      openBtn.classList.remove('active');
+    } else {
+      activeList = openEndedList;
+      activeType = 'open';
+      openBtn.classList.add('active');
+      opinionBtn.classList.remove('active');
+    }
+    updateBadge();
+    displayRandomTopic(); // show fresh random from selected category
+  }
+
+  // event listeners
+  opinionBtn.addEventListener('click', () => setActiveCategory('opinions'));
+  openBtn.addEventListener('click', () => setActiveCategory('open'));
+  randomBtn.addEventListener('click', displayRandomTopic);
+
+  // initialize: opinions first, show random prompt
+  setActiveCategory('opinions');
+</script>
+</body>
+</html>
