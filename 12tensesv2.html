@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12 Tenses – Conjugation Table</title>
+    <style>
+        /* (styles unchanged – same as before) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px 25px;
+            max-width: 1100px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        h1 {
+            font-size: 1.7rem;
+            color: #2d3748;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 18px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            background: #f7fafc;
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .control-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #4a5568;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .toggle-btn {
+            padding: 5px 14px;
+            border-radius: 30px;
+            border: 1px solid #e2e8f0;
+            background: #edf2f7;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #4a5568;
+            cursor: pointer;
+            transition: 0.15s;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .toggle-btn .check-icon {
+            display: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .toggle-btn.active {
+            background: #2b6cb0;
+            color: white;
+            border-color: #2b6cb0;
+        }
+        .toggle-btn.active .check-icon {
+            display: inline;
+        }
+        .toggle-btn:hover {
+            background: #cbd5e0;
+        }
+        .toggle-btn.active:hover {
+            background: #2c5282;
+        }
+        .pronoun-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 2px;
+        }
+        .pronoun-chips label {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: #2d3748;
+            background: #edf2f7;
+            padding: 2px 10px 2px 6px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.15s;
+            border: 1px solid transparent;
+        }
+        .pronoun-chips label:hover {
+            background: #e2e8f0;
+        }
+        .pronoun-chips input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: #2b6cb0;
+            cursor: pointer;
+        }
+        .pronoun-chips label.checked {
+            background: #bee3f8;
+            border-color: #2b6cb0;
+        }
+        .pair-header {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 8px 16px;
+            background: #edf2f7;
+            border-radius: 16px;
+            position: relative;
+        }
+        .pair-header .subject-display {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2b6cb0;
+            text-transform: capitalize;
+        }
+        .pair-header .verb-display {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #c53030;
+        }
+        .pair-header .mode-badge {
+            margin-left: auto;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            background: #4a5568;
+            padding: 3px 14px;
+            border-radius: 30px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .pair-header .mode-badge.negative {
+            background: #e53e3e;
+        }
+        .pair-header .mode-badge.question {
+            background: #3182ce;
+        }
+        .pair-header .mode-badge.negative-question {
+            background: #805ad5;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th,
+        td {
+            border: 1px solid #e2e8f0;
+            padding: 6px 8px;
+            text-align: center;
+            vertical-align: middle;
+            min-width: 140px;
+        }
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .row-header {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+            text-align: center;
+            min-width: 90px;
+        }
+        .cell-input {
+            width: 100%;
+            border: none;
+            padding: 6px 4px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            background: transparent;
+            outline: none;
+            border-radius: 4px;
+            transition: 0.1s;
+        }
+        .cell-input:focus {
+            background: #ebf8ff;
+            box-shadow: inset 0 0 0 2px #2b6cb0;
+        }
+        .cell-input.correct {
+            background: #f0fff4;
+            color: #22543d;
+        }
+        .cell-input.wrong {
+            background: #fff5f5;
+            color: #9b2c2c;
+        }
+        .cell-feedback {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            min-width: 18px;
+        }
+        .cell-feedback.correct {
+            color: #38a169;
+        }
+        .cell-feedback.wrong {
+            color: #e53e3e;
+        }
+        .cell-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 16px;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .action-row button {
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+        .action-row .check-btn {
+            background: #2b6cb0;
+            color: white;
+        }
+        .action-row .check-btn:hover {
+            background: #2c5282;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(43, 108, 176, 0.25);
+        }
+        .action-row .clear-btn {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+        .action-row .clear-btn:hover {
+            background: #e2e8f0;
+        }
+        .action-row .new-pair-btn {
+            background: #38a169;
+            color: white;
+            font-size: 1.05rem;
+            padding: 10px 30px;
+            box-shadow: 0 4px 12px rgba(56, 161, 105, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .action-row .new-pair-btn:hover {
+            background: #2f855a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(56, 161, 105, 0.4);
+        }
+        .action-row .new-pair-btn:active {
+            transform: translateY(0);
+        }
+        .action-row .reset-stats-btn {
+            background: #edf2f7;
+            color: #718096;
+            font-size: 0.8rem;
+            padding: 6px 14px;
+        }
+        .action-row .reset-stats-btn:hover {
+            background: #e2e8f0;
+        }
+        .stats {
+            display: flex;
+            gap: 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #4a5568;
+            margin-left: auto;
+            align-items: center;
+        }
+        .stats .correct-count {
+            color: #38a169;
+        }
+        .stats .wrong-count {
+            color: #e53e3e;
+        }
+        .counter {
+            color: #a0aec0;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .hint {
+            font-size: 0.75rem;
+            color: #a0aec0;
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        /* ---- Irregular Verbs Panel ---- */
+        .irregular-panel {
+            margin-top: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #fafbfc;
+        }
+        .irregular-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            background: #f7fafc;
+            cursor: pointer;
+            user-select: none;
+            transition: 0.15s;
+            border-bottom: 1px solid transparent;
+        }
+        .irregular-panel-header:hover {
+            background: #edf2f7;
+        }
+        .irregular-panel-header .title {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .irregular-panel-header .title .count-badge {
+            background: #2b6cb0;
+            color: white;
+            font-size: 0.7rem;
+            border-radius: 30px;
+            padding: 1px 10px;
+            font-weight: 600;
+        }
+        .irregular-panel-header .toggle-icon {
+            font-size: 1.2rem;
+            color: #a0aec0;
+            transition: transform 0.2s;
+        }
+        .irregular-panel-header .toggle-icon.open {
+            transform: rotate(180deg);
+        }
+        .irregular-panel-body {
+            padding: 16px 18px;
+            display: none;
+            max-height: 420px;
+            overflow-y: auto;
+        }
+        .irregular-panel-body.open {
+            display: block;
+        }
+        .irregular-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 14px;
+            margin-bottom: 14px;
+            align-items: center;
+        }
+        .irregular-controls .range-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            color: #4a5568;
+        }
+        .irregular-controls .range-group input[type="number"] {
+            width: 44px;
+            padding: 3px 5px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.82rem;
+            text-align: center;
+            outline: none;
+        }
+        .irregular-controls .range-group input[type="number"]:focus {
+            border-color: #2b6cb0;
+            box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.12);
+        }
+        .irregular-controls .range-group .range-btn {
+            padding: 3px 12px;
+            border-radius: 30px;
+            border: none;
+            background: #2b6cb0;
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .irregular-controls .range-group .range-btn:hover {
+            background: #2c5282;
+        }
+        .irregular-controls .action-btns {
+            display: flex;
+            gap: 5px;
+        }
+        .irregular-controls .action-btns button {
+            padding: 3px 12px;
+            border-radius: 30px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #4a5568;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .irregular-controls .action-btns button:hover {
+            background: #edf2f7;
+            border-color: #a0aec0;
+        }
+        .irregular-controls .selected-count {
+            font-size: 0.78rem;
+            color: #4a5568;
+            font-weight: 500;
+            margin-left: auto;
+        }
+        .irregular-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 2px 6px;
+        }
+        .irregular-grid label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            color: #2d3748;
+            padding: 3px 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .irregular-grid label:hover {
+            background: #edf2f7;
+        }
+        .irregular-grid label input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: #2b6cb0;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .irregular-grid label .verb-form {
+            font-weight: 500;
+        }
+        .irregular-grid label .verb-forms {
+            font-size: 0.62rem;
+            color: #a0aec0;
+            margin-left: auto;
+        }
+        .irregular-grid label.selected {
+            background: #bee3f8;
+            border-radius: 6px;
+        }
+        .irregular-grid label .check-mark {
+            color: #2b6cb0;
+            font-weight: 700;
+            margin-left: auto;
+            font-size: 0.8rem;
+        }
+        .irregular-empty {
+            color: #a0aec0;
+            font-size: 0.85rem;
+            text-align: center;
+            padding: 20px 0;
+        }
+        .irregular-search {
+            padding: 5px 12px;
+            border-radius: 30px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.78rem;
+            outline: none;
+            width: 170px;
+            background: white;
+            transition: 0.15s;
+        }
+        .irregular-search:focus {
+            border-color: #2b6cb0;
+            box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.12);
+        }
+        .irregular-search::placeholder {
+            color: #a0aec0;
+        }
+        .irregular-panel-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .irregular-panel-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .irregular-panel-body::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 10px;
+        }
+        .irregular-panel-body::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        @media (max-width: 700px) {
+            .card {
+                padding: 16px 12px;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .control-group {
+                flex-wrap: wrap;
+            }
+            .pair-header {
+                flex-direction: column;
+                align-items: center;
+                gap: 6px;
+                padding: 10px 12px;
+            }
+            .pair-header .mode-badge {
+                margin-left: 0;
+            }
+            table {
+                font-size: 0.72rem;
+            }
+            th,
+            td {
+                padding: 4px 2px;
+                min-width: 70px;
+            }
+            .row-header {
+                min-width: 55px;
+                font-size: 0.72rem;
+            }
+            .cell-input {
+                font-size: 0.72rem;
+                padding: 4px 2px;
+            }
+            .action-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .action-row button {
+                width: 100%;
+                justify-content: center;
+            }
+            .stats {
+                margin-left: 0;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .irregular-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            .irregular-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .irregular-controls .selected-count {
+                margin-left: 0;
+            }
+            .irregular-search {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📘 12 Tense Table</h1>
+        <p class="subtitle">Conjugate the verb for each time &amp; aspect – include the subject in your answer</p>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <label>Mode</label>
+                <button id="negativeToggle" class="toggle-btn"><span class="check-icon">✓</span> ❌ Negative</button>
+                <button id="questionToggle" class="toggle-btn"><span class="check-icon">✓</span> ❓ Question</button>
+            </div>
+            <div class="control-group">
+                <button id="irregularToggle" class="toggle-btn"><span class="check-icon">✓</span> 🔀 Irregular only</button>
+            </div>
+            <div class="control-group" style="flex:1; min-width:160px;">
+                <label>Pronouns</label>
+                <div class="pronoun-chips" id="pronounChips">
+                    <label><input type="checkbox" value="I" checked> I</label>
+                    <label><input type="checkbox" value="you" checked> you</label>
+                    <label><input type="checkbox" value="he" checked> he</label>
+                    <label><input type="checkbox" value="she" checked> she</label>
+                    <label><input type="checkbox" value="it" checked> it</label>
+                    <label><input type="checkbox" value="we" checked> we</label>
+                    <label><input type="checkbox" value="they" checked> they</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject + Verb -->
+        <div class="pair-header">
+            <span class="subject-display" id="subjectDisplay">I</span>
+            <span class="verb-display" id="verbDisplay">be</span>
+            <span class="mode-badge" id="modeBadge">Affirmative</span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table id="conjugationTable">
+                <thead>
+                    <tr>
+                        <th style="min-width:80px;">Time \ Aspect</th>
+                        <th>Simple</th>
+                        <th>Continuous</th>
+                        <th>Perfect</th>
+                        <th>Perfect Continuous</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="row-header">Past</td>
+                        <td data-time="past" data-aspect="simple"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                        <td data-time="past" data-aspect="continuous"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                        <td data-time="past" data-aspect="perfect"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                        <td data-time="past" data-aspect="perfect_continuous"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                    </tr>
+                    <tr>
+                        <td class="row-header">Present</td>
+                        <td data-time="present" data-aspect="simple"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                        <td data-time="present" data-aspect="continuous"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                        <td data-time="present" data-aspect="perfect"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                        <td data-time="present" data-aspect="perfect_continuous"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                    </tr>
+                    <tr>
+                        <td class="row-header">Future</td>
+                        <td data-time="future" data-aspect="simple"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                        <td data-time="future" data-aspect="continuous"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                        <td data-time="future" data-aspect="perfect"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                        <td data-time="future" data-aspect="perfect_continuous"><div class="cell-wrapper"><input class="cell-input" type="text" placeholder=""><span class="cell-feedback"></span></div></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Action row -->
+        <div class="action-row">
+            <button class="check-btn" id="checkAllBtn">✅ Check All</button>
+            <button class="clear-btn" id="clearAllBtn">🗑️ Clear All</button>
+            <button class="new-pair-btn" id="newPairBtn">✨ New Pair</button>
+            <span class="counter" id="counter">Pair #1</span>
+            <div class="stats">
+                <span>✅ <span class="correct-count" id="correctCount">0</span></span>
+                <span>❌ <span class="wrong-count" id="wrongCount">0</span></span>
+                <button class="reset-stats-btn" id="resetStatsBtn">Reset stats</button>
+            </div>
+        </div>
+        <div class="hint">💡 Type the full conjugation including the subject (e.g., <em>I am</em>).</div>
+
+        <!-- Irregular Verbs Panel -->
+        <div class="irregular-panel" id="irregularPanel">
+            <div class="irregular-panel-header" id="irregularPanelHeader">
+                <span class="title">
+                    📚 Irregular Verbs
+                    <span class="count-badge" id="irregularCountBadge">0 selected</span>
+                </span>
+                <span class="toggle-icon" id="irregularToggleIcon">▼</span>
+            </div>
+            <div class="irregular-panel-body" id="irregularPanelBody">
+                <div class="irregular-controls">
+                    <div class="range-group">
+                        <span>Range</span>
+                        <input type="number" id="rangeFrom" value="1" min="1" max="200">
+                        <span>–</span>
+                        <input type="number" id="rangeTo" value="20" min="1" max="200">
+                        <button class="range-btn" id="applyRangeBtn">Apply</button>
+                    </div>
+                    <div class="action-btns">
+                        <button id="selectAllIrregularBtn">Select All</button>
+                        <button id="deselectAllIrregularBtn">Deselect All</button>
+                    </div>
+                    <input class="irregular-search" id="irregularSearch" type="text" placeholder="🔍 Filter verbs…">
+                    <span class="selected-count" id="irregularSelectedCount">0 / 0 selected</span>
+                </div>
+                <div class="irregular-grid" id="irregularGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // --------------------------------------------------------------
+            // 1. PRONOUNS
+            // --------------------------------------------------------------
+            const ALL_PRONOUNS = ["I", "you", "he", "she", "it", "we", "they"];
+
+            // --------------------------------------------------------------
+            // 2. VERB LIST (original + irregulars merged)
+            // --------------------------------------------------------------
+            const ORIGINAL_VERBS = [
+                "be", "have", "do", "would", "will", "can", "know", "see", "may",
+                "should", "get", "think", "go", "make", "must", "take", "come", "say",
+                "put", "want", "give", "look", "find", "need", "like", "set", "use",
+                "become", "tell", "keep", "help", "work", "let", "feel", "provide",
+                "believe", "try", "shall", "ask", "remember", "leave", "show", "pay",
+                "run", "read", "seem", "include", "bring", "understand", "start", "play",
+                "cut", "live", "meet", "move", "hear", "call", "stop", "turn", "talk",
+                "buy", "thank", "change", "continue", "consider", "allow", "hope",
+                "produce", "stay", "appear", "write", "hold", "expect", "ensure",
+                "suppose", "wish", "carry", "follow", "offer", "support", "accept",
+                "speak", "lead", "remain", "stand", "suggest", "hit", "develop",
+                "happen", "sit", "win", "love", "add", "learn", "create", "agree",
+                "apply", "wait", "avoid", "send", "form", "explain", "return", "sell",
+                "receive", "open", "begin", "eat", "increase", "voice", "spend", "join",
+                "reduce", "save", "require", "fall", "mind", "build", "achieve",
+                "choose", "prevent", "reach", "decide", "deal", "face", "enjoy", "watch",
+                "lose", "walk", "cover", "improve", "tend", "raise", "draw", "forget",
+                "imagine", "act", "pick", "cause", "cost", "pass", "break", "prove",
+                "occur", "discuss", "listen", "maintain", "end", "exist", "seek", "grow",
+                "check", "serve", "share", "establish", "enter", "control", "die",
+                "encourage", "answer", "protect", "identify", "visit", "care", "enable",
+                "affect", "claim", "note", "obtain", "represent", "contain", "beat",
+                "spread", "worry", "bear", "shut", "wonder", "afford", "fit", "kill",
+                "regard", "describe", "place", "drive", "wear", "argue", "involve",
+                "lie", "contact", "catch", "assume", "indicate", "operate", "manage",
+                "cope", "remove", "determine", "fight", "pull", "realise", "reflect",
+                "fill", "refer", "gain", "examine", "prefer", "travel", "admit",
+                "recognise", "attend", "hurt", "respond", "sleep", "introduce", "depend",
+                "survive", "suffer", "notice", "close", "result", "replace", "complete",
+                "miss", "rise", "present", "arise", "point", "fail", "promote",
+                "perform", "discover", "express", "extend", "drink", "mention", "vary",
+                "concentrate", "benefit", "treat", "hang", "throw", "prepare", "drop",
+                "study", "push", "press", "report", "cast", "arrive", "sound", "finish",
+                "ring", "test", "secure", "collect", "escape", "teach", "last",
+                "welcome", "rely", "trust", "match", "assess", "contribute", "repeat",
+                "supply", "wan", "plan", "reveal", "state", "confirm", "appreciate",
+                "hate", "relate", "overcome", "rid", "marry", "attempt", "retain",
+                "handle", "attract", "assist", "influence", "mark", "split", "experience",
+                "recall", "adopt", "sign", "touch", "fear", "stick", "settle", "ignore",
+                "compare", "define", "exercise", "demonstrate", "account", "persuade",
+                "investigate", "clear", "guess", "record", "vote", "explore", "blame",
+                "arrange", "cross", "deny", "realize", "hide", "focus", "deliver",
+                "proceed", "succeed", "bother", "refuse", "force", "demand", "recognize",
+                "count", "doubt", "reckon", "belong", "emerge", "sing", "intend",
+                "justify", "advise", "defend", "laugh", "dare", "acquire", "recover",
+                "generate", "distinguish", "suspect", "earn", "finance", "bet",
+                "destroy", "rest", "judge", "pursue", "comment", "satisfy", "compete",
+                "resist", "suit", "address", "solve", "lift", "alter", "impose",
+                "display", "appeal", "release", "sort", "differ", "select", "measure",
+                "recommend", "order", "transfer", "attack", "expand", "roll", "burst",
+                "undertake", "relax", "participate", "behave", "strike", "remind",
+                "review", "approach", "employ", "restore", "wash", "observe", "combine",
+                "insist", "issue", "ride", "constitute", "jump", "cook", "switch",
+                "train", "cry", "clean", "invest", "step", "limit", "illustrate", "own",
+                "tackle", "challenge", "view", "withdraw", "possess", "communicate",
+                "climb", "gather", "separate", "preserve", "implement", "shift",
+                "resolve", "reject", "inform", "imply", "acknowledge", "conclude",
+                "shoot", "guarantee", "comply", "borrow", "question", "promise",
+                "enhance", "monitor", "risk", "permit", "purchase", "propose",
+                "celebrate", "charge", "research", "aim", "accommodate", "phone",
+                "waste", "dance", "wake", "pray", "disappear", "telephone", "predict",
+                "score", "slip", "commit", "complain", "detect", "exclude", "excuse",
+                "interpret", "publish", "link", "forgive", "negotiate", "analyse",
+                "name", "stretch", "upset", "qualify", "damage", "launch", "paint",
+                "specify", "grant", "lend", "construct", "react", "organise", "deserve",
+                "head", "direct", "land", "conduct", "sustain", "submit", "consist",
+                "blow", "mix", "guide", "owe", "convince", "practise", "strengthen",
+                "knock", "invite", "burn", "abandon", "reply", "shake", "fix", "pretend",
+                "consult", "divide", "engage", "search", "fulfil", "exploit", "rule",
+                "process", "fetch", "convey", "shed", "market", "fancy", "smoke",
+                "smell", "thrust", "incorporate", "restrict", "warn", "eliminate",
+                "kiss", "announce", "evaluate", "convert", "retire", "adjust", "ease",
+                "breathe", "pour", "knit", "exceed", "back", "approve", "trace",
+                "register", "calculate", "occupy", "stimulate", "print", "stress",
+                "appoint", "free", "interfere", "object", "boost", "smile", "facilitate",
+                "lack", "cease", "enforce", "adapt", "tie", "quote", "dominate", "pop",
+                "please", "design", "intervene", "yield", "resign", "spell", "shout",
+                "stir", "emphasise", "spare", "estimate", "kick", "regret", "offset",
+                "list", "dress", "declare", "assure", "derive", "access", "delay",
+                "clarify", "copy", "favour", "dig", "respect", "hand", "capture",
+                "reinforce", "transform", "perceive", "function", "fuck", "threaten",
+                "quit", "accompany", "swim", "fund", "pack", "correct", "cancel", "sail",
+                "compensate", "steal", "undermine", "range", "feature", "oppose",
+                "locate", "hurry", "tap", "broadcast", "sue", "store", "trade", "bid",
+                "organize", "light", "slow", "concern", "dismiss", "swear", "highlight",
+                "repair", "conform", "amount", "attach", "dream", "rush", "absorb",
+                "sink", "grab", "calm", "protest", "balance", "beg", "install",
+                "advance", "fire", "block", "aid", "flow", "drag", "correspond", "pose",
+                "admire", "relieve", "reverse", "time", "combat", "integrate", "disagree",
+                "connect", "update", "modify", "anticipate", "tax", "opt", "stare",
+                "spot", "command", "obey", "house", "extract", "slide", "counter",
+                "resume", "grasp", "swing", "render", "speed", "confront", "ban", "wipe",
+                "double", "comprise", "witness", "plant", "breed", "assert", "disclose",
+                "defeat", "squeeze", "taste", "bind", "harm", "encounter", "request",
+                "struggle", "hire", "conceal", "recruit", "co-operate", "wander",
+                "emphasize", "weigh", "coincide", "bend", "regulate", "rescue",
+                "entertain", "forecast", "inspect", "export", "urge", "induce", "lock",
+                "exhibit", "exchange", "warm", "confess", "tolerate", "mount", "brush",
+                "reproduce", "undergo", "impress", "figure", "decline", "rub", "cater",
+                "tour", "distribute", "sense", "repay", "regain", "minimise", "halt",
+                "shape", "cool", "disturb", "bite", "progress", "devote", "provoke",
+                "dispose", "translate", "reassure", "contemplate", "alert", "service",
+                "interact", "heat", "devise", "govern", "apologise", "expose", "embrace",
+                "comfort", "seize", "melt", "supplement", "lean", "exert", "beware",
+                "resemble", "abolish", "wed", "arrest", "crack", "suppress", "guard",
+                "surprise", "hesitate", "load", "swallow", "initiate", "float", "effect",
+                "manipulate", "deter", "associate", "administer", "murder", "persist",
+                "greet", "tear", "hunt", "spoil", "line", "bless", "ascertain",
+                "penetrate", "multiply", "merge", "coach", "drain", "suffice", "presume",
+                "fish", "shop", "race", "honour", "freeze", "cure", "revive", "swap",
+                "endure", "chase", "consume", "insert", "anger", "await", "minister",
+                "drift", "substitute", "stem", "surrender", "wind", "contract", "machine",
+                "differentiate", "advertise", "reconcile", "project", "co-ordinate",
+                "snap", "damn", "bake", "top", "fold", "concede", "renew", "formulate",
+                "confuse", "maximise", "sweep", "cheer", "steer", "base", "indulge",
+                "decrease", "reserve", "host", "evolve", "foster", "discourage", "curb",
+                "allocate", "supervise", "fade", "endorse", "condemn", "book", "tip",
+                "reform", "complement", "punish", "bang", "outline", "diminish", "prevail",
+                "leap", "wrap", "compromise", "collapse", "safeguard", "inhibit", "scream",
+                "date", "delete", "attain", "dislike", "conceive", "shine", "dictate",
+                "unite", "import", "spring", "rebuild", "flourish", "criticise", "boil",
+                "flee", "commence", "praise", "draft", "park", "discriminate", "track",
+                "enclose", "interview", "tighten", "price", "colour", "venture",
+                "speculate", "depart", "bury", "interrupt", "disguise", "elect",
+                "withstand", "discharge", "restrain", "thrive", "echo", "divert", "fry",
+                "dissolve", "edit", "assemble", "ruin", "accelerate", "envisage",
+                "congratulate", "retrieve", "descend", "suspend", "experiment", "ship",
+                "frighten", "fool", "ave", "inspire", "heal", "master", "terminate",
+                "amend", "scratch", "embark", "entail", "execute", "consolidate", "cash",
+                "round", "isolate", "warrant", "signal", "weaken", "pin", "march",
+                "desire", "widen", "level", "chat", "board", "contend", "invent",
+                "resource", "manufacture", "seal", "reconsider", "suck", "picture",
+                "crash", "transport", "plug", "assign", "enquire", "campaign", "trap",
+                "surround", "debate", "upgrade", "decorate", "confer", "accumulate",
+                "profit", "file", "inherit", "disrupt", "contrast", "chuck", "tick",
+                "plead", "dip", "subscribe", "educate", "divorce", "spin", "row",
+                "obscure", "creep", "interest", "overlook", "twist", "mature", "blend",
+                "revise", "attribute", "explode", "dwell", "drown", "alleviate", "strip",
+                "grade", "revert", "value", "award", "strive", "notify", "remedy",
+                "accuse", "instruct", "spill", "strain", "comprehend", "soften",
+                "postpone", "wave", "bounce", "stock", "position", "insure", "adhere",
+                "cling", "summon", "pause", "empty", "classify"
+            ];
+
+            // --------------------------------------------------------------
+            // 3. IRREGULAR DATA (full set)
+            // --------------------------------------------------------------
+            const IRREGULAR_DATA = {
+                "arise": { pastSimple: "arose", pastParticiple: "arisen" },
+                "awake": { pastSimple: "awoke", pastParticiple: "awoken" },
+                "be": { pastSimple: "was/were", pastParticiple: "been" },
+                "bear": { pastSimple: "bore", pastParticiple: "born/borne" },
+                "beat": { pastSimple: "beat", pastParticiple: "beaten" },
+                "become": { pastSimple: "became", pastParticiple: "become" },
+                "begin": { pastSimple: "began", pastParticiple: "begun" },
+                "bend": { pastSimple: "bent", pastParticiple: "bent" },
+                "bet": { pastSimple: "bet", pastParticiple: "bet" },
+                "bind": { pastSimple: "bound", pastParticiple: "bound" },
+                "bite": { pastSimple: "bit", pastParticiple: "bitten" },
+                "blow": { pastSimple: "blew", pastParticiple: "blown" },
+                "break": { pastSimple: "broke", pastParticiple: "broken" },
+                "bring": { pastSimple: "brought", pastParticiple: "brought" },
+                "build": { pastSimple: "built", pastParticiple: "built" },
+                "burn": { pastSimple: "burnt/burned", pastParticiple: "burnt/burned" },
+                "burst": { pastSimple: "burst", pastParticiple: "burst" },
+                "buy": { pastSimple: "bought", pastParticiple: "bought" },
+                "cast": { pastSimple: "cast", pastParticiple: "cast" },
+                "catch": { pastSimple: "caught", pastParticiple: "caught" },
+                "choose": { pastSimple: "chose", pastParticiple: "chosen" },
+                "cling": { pastSimple: "clung", pastParticiple: "clung" },
+                "come": { pastSimple: "came", pastParticiple: "come" },
+                "cost": { pastSimple: "cost", pastParticiple: "cost" },
+                "creep": { pastSimple: "crept", pastParticiple: "crept" },
+                "cut": { pastSimple: "cut", pastParticiple: "cut" },
+                "deal": { pastSimple: "dealt", pastParticiple: "dealt" },
+                "dig": { pastSimple: "dug", pastParticiple: "dug" },
+                "do": { pastSimple: "did", pastParticiple: "done" },
+                "draw": { pastSimple: "drew", pastParticiple: "drawn" },
+                "dream": { pastSimple: "dreamt/dreamed", pastParticiple: "dreamt/dreamed" },
+                "drink": { pastSimple: "drank", pastParticiple: "drunk" },
+                "drive": { pastSimple: "drove", pastParticiple: "driven" },
+                "dwell": { pastSimple: "dwelt", pastParticiple: "dwelt" },
+                "eat": { pastSimple: "ate", pastParticiple: "eaten" },
+                "fall": { pastSimple: "fell", pastParticiple: "fallen" },
+                "feed": { pastSimple: "fed", pastParticiple: "fed" },
+                "fight": { pastSimple: "fought", pastParticiple: "fought" },
+                "find": { pastSimple: "found", pastParticiple: "found" },
+                "flee": { pastSimple: "fled", pastParticiple: "fled" },
+                "fly": { pastSimple: "flew", pastParticiple: "flown" },
+                "forbid": { pastSimple: "forbade", pastParticiple: "forbidden" },
+                "forget": { pastSimple: "forgot", pastParticiple: "forgotten" },
+                "forgive": { pastSimple: "forgave", pastParticiple: "forgiven" },
+                "freeze": { pastSimple: "froze", pastParticiple: "frozen" },
+                "get": { pastSimple: "got", pastParticiple: "got/gotten" },
+                "give": { pastSimple: "gave", pastParticiple: "given" },
+                "go": { pastSimple: "went", pastParticiple: "gone" },
+                "grind": { pastSimple: "ground", pastParticiple: "ground" },
+                "grow": { pastSimple: "grew", pastParticiple: "grown" },
+                "hang": { pastSimple: "hung", pastParticiple: "hung" },
+                "have": { pastSimple: "had", pastParticiple: "had" },
+                "hear": { pastSimple: "heard", pastParticiple: "heard" },
+                "hide": { pastSimple: "hid", pastParticiple: "hidden" },
+                "hit": { pastSimple: "hit", pastParticiple: "hit" },
+                "hold": { pastSimple: "held", pastParticiple: "held" },
+                "hurt": { pastSimple: "hurt", pastParticiple: "hurt" },
+                "keep": { pastSimple: "kept", pastParticiple: "kept" },
+                "kneel": { pastSimple: "knelt", pastParticiple: "knelt" },
+                "know": { pastSimple: "knew", pastParticiple: "known" },
+                "lay": { pastSimple: "laid", pastParticiple: "laid" },
+                "lead": { pastSimple: "led", pastParticiple: "led" },
+                "lean": { pastSimple: "leant/leaned", pastParticiple: "leant/leaned" },
+                "learn": { pastSimple: "learnt/learned", pastParticiple: "learnt/learned" },
+                "leave": { pastSimple: "left", pastParticiple: "left" },
+                "lend": { pastSimple: "lent", pastParticiple: "lent" },
+                "let": { pastSimple: "let", pastParticiple: "let" },
+                "lie": { pastSimple: "lay", pastParticiple: "lain" },
+                "light": { pastSimple: "lit/lighted", pastParticiple: "lit/lighted" },
+                "lose": { pastSimple: "lost", pastParticiple: "lost" },
+                "make": { pastSimple: "made", pastParticiple: "made" },
+                "mean": { pastSimple: "meant", pastParticiple: "meant" },
+                "meet": { pastSimple: "met", pastParticiple: "met" },
+                "pay": { pastSimple: "paid", pastParticiple: "paid" },
+                "put": { pastSimple: "put", pastParticiple: "put" },
+                "read": { pastSimple: "read", pastParticiple: "read" },
+                "ride": { pastSimple: "rode", pastParticiple: "ridden" },
+                "ring": { pastSimple: "rang", pastParticiple: "rung" },
+                "rise": { pastSimple: "rose", pastParticiple: "risen" },
+                "run": { pastSimple: "ran", pastParticiple: "run" },
+                "saw": { pastSimple: "sawed", pastParticiple: "sawn/sawed" },
+                "say": { pastSimple: "said", pastParticiple: "said" },
+                "see": { pastSimple: "saw", pastParticiple: "seen" },
+                "seek": { pastSimple: "sought", pastParticiple: "sought" },
+                "sell": { pastSimple: "sold", pastParticiple: "sold" },
+                "send": { pastSimple: "sent", pastParticiple: "sent" },
+                "set": { pastSimple: "set", pastParticiple: "set" },
+                "shake": { pastSimple: "shook", pastParticiple: "shaken" },
+                "shave": { pastSimple: "shaved", pastParticiple: "shaved/shaven" },
+                "shed": { pastSimple: "shed", pastParticiple: "shed" },
+                "shine": { pastSimple: "shone", pastParticiple: "shone" },
+                "shoot": { pastSimple: "shot", pastParticiple: "shot" },
+                "show": { pastSimple: "showed", pastParticiple: "shown" },
+                "shrink": { pastSimple: "shrank", pastParticiple: "shrunk" },
+                "shut": { pastSimple: "shut", pastParticiple: "shut" },
+                "sing": { pastSimple: "sang", pastParticiple: "sung" },
+                "sink": { pastSimple: "sank", pastParticiple: "sunk" },
+                "sit": { pastSimple: "sat", pastParticiple: "sat" },
+                "sleep": { pastSimple: "slept", pastParticiple: "slept" },
+                "slide": { pastSimple: "slid", pastParticiple: "slid" },
+                "smell": { pastSimple: "smelt/smelled", pastParticiple: "smelt/smelled" },
+                "sow": { pastSimple: "sowed", pastParticiple: "sown/sowed" },
+                "speak": { pastSimple: "spoke", pastParticiple: "spoken" },
+                "spell": { pastSimple: "spelt/spelled", pastParticiple: "spelt/spelled" },
+                "spend": { pastSimple: "spent", pastParticiple: "spent" },
+                "spill": { pastSimple: "spilt/spilled", pastParticiple: "spilt/spilled" },
+                "spit": { pastSimple: "spat/spit", pastParticiple: "spat/spit" },
+                "spread": { pastSimple: "spread", pastParticiple: "spread" },
+                "spring": { pastSimple: "sprang", pastParticiple: "sprung" },
+                "stand": { pastSimple: "stood", pastParticiple: "stood" },
+                "steal": { pastSimple: "stole", pastParticiple: "stolen" },
+                "stick": { pastSimple: "stuck", pastParticiple: "stuck" },
+                "sting": { pastSimple: "stung", pastParticiple: "stung" },
+                "strike": { pastSimple: "struck", pastParticiple: "struck/stricken" },
+                "strive": { pastSimple: "strove", pastParticiple: "striven" },
+                "swear": { pastSimple: "swore", pastParticiple: "sworn" },
+                "sweep": { pastSimple: "swept", pastParticiple: "swept" },
+                "swell": { pastSimple: "swelled", pastParticiple: "swollen/swelled" },
+                "swim": { pastSimple: "swam", pastParticiple: "swum" },
+                "swing": { pastSimple: "swung", pastParticiple: "swung" },
+                "take": { pastSimple: "took", pastParticiple: "taken" },
+                "teach": { pastSimple: "taught", pastParticiple: "taught" },
+                "tear": { pastSimple: "tore", pastParticiple: "torn" },
+                "tell": { pastSimple: "told", pastParticiple: "told" },
+                "think": { pastSimple: "thought", pastParticiple: "thought" },
+                "throw": { pastSimple: "threw", pastParticiple: "thrown" },
+                "understand": { pastSimple: "understood", pastParticiple: "understood" },
+                "wake": { pastSimple: "woke", pastParticiple: "woken" },
+                "wear": { pastSimple: "wore", pastParticiple: "worn" },
+                "weep": { pastSimple: "wept", pastParticiple: "wept" },
+                "win": { pastSimple: "won", pastParticiple: "won" },
+                "wind": { pastSimple: "wound", pastParticiple: "wound" },
+                "write": { pastSimple: "wrote", pastParticiple: "written" },
+                // Extra irregulars
+                "withdraw": { pastSimple: "withdrew", pastParticiple: "withdrawn" },
+                "withstand": { pastSimple: "withstood", pastParticiple: "withstood" },
+                "undertake": { pastSimple: "undertook", pastParticiple: "undertaken" },
+                "overcome": { pastSimple: "overcame", pastParticiple: "overcome" },
+                "upset": { pastSimple: "upset", pastParticiple: "upset" },
+                "input": { pastSimple: "input", pastParticiple: "input" },
+                "output": { pastSimple: "output", pastParticiple: "output" }
+            };
+
+            // --------------------------------------------------------------
+            // 4. MERGE VERBS
+            // --------------------------------------------------------------
+            const IRREGULAR_BASES = new Set(Object.keys(IRREGULAR_DATA));
+            const verbSet = new Set(ORIGINAL_VERBS);
+            for (const base of IRREGULAR_BASES) verbSet.add(base);
+            const EXTRA_IRREGULARS = ["withdraw", "withstand", "undertake", "overcome", "upset", "input", "output"];
+            for (const v of EXTRA_IRREGULARS) {
+                verbSet.add(v);
+                IRREGULAR_BASES.add(v);
+            }
+            const VERBS = Array.from(verbSet);
+            const IRREGULAR_VERBS_SORTED = Array.from(IRREGULAR_BASES).sort((a, b) => a.localeCompare(b));
+
+            // --------------------------------------------------------------
+            // 5. HELPERS for verb forms – FIXED consonant doubling
+            // --------------------------------------------------------------
+            function getPresentParticiple(base) {
+                // 1. Drop silent 'e' (except -ee, -ye, -oe)
+                if (base.endsWith("e") && base.length > 1 && !base.endsWith("ee") && !base.endsWith("ye") && !base.endsWith(
+                        "oe")) {
+                    return base.slice(0, -1) + "ing";
+                }
+                // 2. Double final consonant if:
+                //    - ends in a single vowel + single consonant (not w, x, y)
+                //    - AND does NOT end with "er" (unstressed ending, e.g. recover, offer)
+                if (base.match(/[aeiou][^aeiouwxy]$/i) && base.length > 2 && !base.endsWith("er")) {
+                    return base + base[base.length - 1] + "ing";
+                }
+                // 3. Default: just add "ing"
+                return base + "ing";
+            }
+
+            function getPastSimple(base) {
+                // Irregular verbs take precedence
+                if (IRREGULAR_BASES.has(base)) {
+                    const d = IRREGULAR_DATA[base];
+                    if (d && d.pastSimple) return d.pastSimple.split("/")[0].trim();
+                }
+                // Regular verbs
+                if (base.endsWith("e")) return base + "d";
+                if (base.endsWith("y") && base.length > 1 && !base.match(/[aeiou]y$/i)) {
+                    return base.slice(0, -1) + "ied";
+                }
+                // Same consonant‑doubling rule as above, but for -ed
+                if (base.match(/[aeiou][^aeiouwxy]$/i) && base.length > 2 && !base.endsWith("er")) {
+                    return base + base[base.length - 1] + "ed";
+                }
+                return base + "ed";
+            }
+
+            function getThirdPersonSingular(base) {
+                if (base.endsWith("s") || base.endsWith("sh") || base.endsWith("ch") || base.endsWith("x") || base.endsWith(
+                        "z") || base.endsWith("o")) return base + "es";
+                if (base.endsWith("y") && base.length > 1 && !base.match(/[aeiou]y$/i)) return base.slice(0, -1) + "ies";
+                return base + "s";
+            }
+
+            function getPastParticiple(base) {
+                // Same as past simple for regular verbs
+                if (IRREGULAR_BASES.has(base)) {
+                    const d = IRREGULAR_DATA[base];
+                    if (d && d.pastParticiple) return d.pastParticiple.split("/")[0].trim();
+                }
+                return getPastSimple(base);
+            }
+
+            // --------------------------------------------------------------
+            // 6. CONJUGATION ENGINE (unchanged)
+            // --------------------------------------------------------------
+            function getCorrectAnswer(time, aspect, subject, verb, negative, question) {
+                const base = verb;
+                const pp = getPresentParticiple(base);
+                const ps = getPastSimple(base);
+                const ppp = getPastParticiple(base);
+                const third = getThirdPersonSingular(base);
+                const subj = subject.toLowerCase();
+
+                let aux = "";
+                let main = "";
+                let needDo = false;
+                let doForm = "";
+
+                switch (time + "_" + aspect) {
+                    case "past_simple":
+                        main = ps;
+                        needDo = true;
+                        doForm = "did";
+                        break;
+                    case "present_simple":
+                        main = (subj === "i" || subj === "you" || subj === "we" || subj === "they") ? base : third;
+                        needDo = true;
+                        doForm = (subj === "i" || subj === "you" || subj === "we" || subj === "they") ? "do" : "does";
+                        break;
+                    case "future_simple":
+                        aux = "will";
+                        main = base;
+                        break;
+                    case "past_continuous":
+                        aux = (subj === "i" || subj === "he" || subj === "she" || subj === "it") ? "was" : "were";
+                        main = pp;
+                        break;
+                    case "present_continuous":
+                        if (subj === "i") aux = "am";
+                        else if (subj === "he" || subj === "she" || subj === "it") aux = "is";
+                        else aux = "are";
+                        main = pp;
+                        break;
+                    case "future_continuous":
+                        aux = "will";
+                        main = "be " + pp;
+                        break;
+                    case "past_perfect":
+                        aux = "had";
+                        main = ppp;
+                        break;
+                    case "present_perfect":
+                        aux = (subj === "i" || subj === "you" || subj === "we" || subj === "they") ? "have" : "has";
+                        main = ppp;
+                        break;
+                    case "future_perfect":
+                        aux = "will";
+                        main = "have " + ppp;
+                        break;
+                    case "past_perfect_continuous":
+                        aux = "had";
+                        main = "been " + pp;
+                        break;
+                    case "present_perfect_continuous":
+                        aux = (subj === "i" || subj === "you" || subj === "we" || subj === "they") ? "have" : "has";
+                        main = "been " + pp;
+                        break;
+                    case "future_perfect_continuous":
+                        aux = "will";
+                        main = "have been " + pp;
+                        break;
+                    default:
+                        return "";
+                }
+
+                let full = "";
+                if (needDo) {
+                    let doAux = doForm;
+                    if (negative && !question) {
+                        full = subject + " " + doAux + " not " + base;
+                    } else if (negative && question) {
+                        let negDo = doAux + "n't";
+                        if (doAux === "do") negDo = "don't";
+                        else if (doAux === "does") negDo = "doesn't";
+                        else if (doAux === "did") negDo = "didn't";
+                        full = negDo + " " + subject + " " + base;
+                    } else if (question && !negative) {
+                        full = doAux + " " + subject + " " + base;
+                    } else {
+                        full = subject + " " + main;
+                    }
+                } else {
+                    if (negative && !question) {
+                        full = subject + " " + aux + " not " + main;
+                    } else if (negative && question) {
+                        let negAux = aux + "n't";
+                        if (aux === "am") negAux = "aren't";
+                        if (aux === "will") negAux = "won't";
+                        if (aux === "have") negAux = "haven't";
+                        if (aux === "has") negAux = "hasn't";
+                        if (aux === "had") negAux = "hadn't";
+                        if (aux === "was") negAux = "wasn't";
+                        if (aux === "were") negAux = "weren't";
+                        if (aux === "are") negAux = "aren't";
+                        if (aux === "is") negAux = "isn't";
+                        full = negAux + " " + subject + " " + main;
+                    } else if (question && !negative) {
+                        full = aux + " " + subject + " " + main;
+                    } else {
+                        full = subject + " " + (aux ? aux + " " : "") + main;
+                    }
+                }
+
+                full = full.replace(/\s+/g, ' ').trim();
+                if (full) {
+                    full = full.charAt(0).toUpperCase() + full.slice(1);
+                }
+                return full;
+            }
+
+            // --------------------------------------------------------------
+            // 7. DOM REFS (unchanged)
+            // --------------------------------------------------------------
+            const subjectDisplay = document.getElementById('subjectDisplay');
+            const verbDisplay = document.getElementById('verbDisplay');
+            const modeBadge = document.getElementById('modeBadge');
+            const counterEl = document.getElementById('counter');
+            const correctCountEl = document.getElementById('correctCount');
+            const wrongCountEl = document.getElementById('wrongCount');
+            const resetStatsBtn = document.getElementById('resetStatsBtn');
+            const irregularToggle = document.getElementById('irregularToggle');
+            const negativeToggle = document.getElementById('negativeToggle');
+            const questionToggle = document.getElementById('questionToggle');
+            const pronounChips = document.getElementById('pronounChips');
+            const checkAllBtn = document.getElementById('checkAllBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const newPairBtn = document.getElementById('newPairBtn');
+            const table = document.getElementById('conjugationTable');
+
+            // Irregular panel
+            const panelHeader = document.getElementById('irregularPanelHeader');
+            const panelBody = document.getElementById('irregularPanelBody');
+            const toggleIcon = document.getElementById('irregularToggleIcon');
+            const irregularGrid = document.getElementById('irregularGrid');
+            const irregularSearch = document.getElementById('irregularSearch');
+            const rangeFrom = document.getElementById('rangeFrom');
+            const rangeTo = document.getElementById('rangeTo');
+            const applyRangeBtn = document.getElementById('applyRangeBtn');
+            const selectAllBtn = document.getElementById('selectAllIrregularBtn');
+            const deselectAllBtn = document.getElementById('deselectAllIrregularBtn');
+            const selectedCountSpan = document.getElementById('irregularSelectedCount');
+            const countBadge = document.getElementById('irregularCountBadge');
+
+            // --------------------------------------------------------------
+            // 8. STATE
+            // --------------------------------------------------------------
+            let currentSubject = "I";
+            let currentVerb = "be";
+            let pairCount = 1;
+            let correctCount = 0;
+            let wrongCount = 0;
+            let irregularOnly = false;
+            let negativeMode = false;
+            let questionMode = false;
+            let selectedPronouns = new Set(["I", "you", "he", "she", "it", "we", "they"]);
+            let selectedIrregularVerbs = new Set();
+            let panelOpen = false;
+
+            // --------------------------------------------------------------
+            // 9. PRONOUN CHIPS (unchanged)
+            // --------------------------------------------------------------
+            function updatePronounChips() {
+                const labels = pronounChips.querySelectorAll('label');
+                labels.forEach(label => {
+                    const cb = label.querySelector('input[type="checkbox"]');
+                    if (cb) {
+                        label.classList.toggle('checked', cb.checked);
+                        if (cb.checked) selectedPronouns.add(cb.value);
+                        else selectedPronouns.delete(cb.value);
+                    }
+                });
+                if (selectedPronouns.size === 0) {
+                    labels.forEach(label => {
+                        const cb = label.querySelector('input[type="checkbox"]');
+                        if (cb) {
+                            cb.checked = true;
+                            selectedPronouns.add(cb.value);
+                            label.classList.add('checked');
+                        }
+                    });
+                }
+            }
+            pronounChips.addEventListener('change', function(e) {
+                if (e.target && e.target.type === 'checkbox') {
+                    updatePronounChips();
+                    generateNewPair();
+                }
+            });
+            updatePronounChips();
+
+            // --------------------------------------------------------------
+            // 10. TOGGLES (unchanged)
+            // --------------------------------------------------------------
+            function updateToggleUI() {
+                irregularToggle.classList.toggle('active', irregularOnly);
+                negativeToggle.classList.toggle('active', negativeMode);
+                questionToggle.classList.toggle('active', questionMode);
+                updateModeBadge();
+            }
+
+            irregularToggle.addEventListener('click', function() {
+                irregularOnly = !irregularOnly;
+                updateToggleUI();
+                generateNewPair();
+            });
+
+            negativeToggle.addEventListener('click', function() {
+                negativeMode = !negativeMode;
+                updateToggleUI();
+                clearAll();
+            });
+
+            questionToggle.addEventListener('click', function() {
+                questionMode = !questionMode;
+                updateToggleUI();
+                clearAll();
+            });
+
+            function updateModeBadge() {
+                let mode = "Affirmative";
+                if (negativeMode && questionMode) mode = "Negative Question";
+                else if (negativeMode) mode = "Negative";
+                else if (questionMode) mode = "Question";
+                modeBadge.textContent = mode;
+                modeBadge.className = 'mode-badge';
+                if (negativeMode && questionMode) modeBadge.classList.add('negative-question');
+                else if (negativeMode) modeBadge.classList.add('negative');
+                else if (questionMode) modeBadge.classList.add('question');
+            }
+            updateModeBadge();
+
+            // --------------------------------------------------------------
+            // 11. IRREGULAR PANEL (unchanged)
+            // --------------------------------------------------------------
+            function renderIrregularGrid(filter = '') {
+                const filterLower = filter.toLowerCase().trim();
+                let html = '';
+                let selectedCount = 0;
+
+                IRREGULAR_VERBS_SORTED.forEach((verb) => {
+                    const show = !filterLower || verb.toLowerCase().includes(filterLower);
+                    if (!show) return;
+                    const isSelected = selectedIrregularVerbs.has(verb);
+                    if (isSelected) selectedCount++;
+                    const data = IRREGULAR_DATA[verb] || {};
+                    const ps = data.pastSimple ? data.pastSimple.split('/')[0].trim() : '—';
+                    const ppp = data.pastParticiple ? data.pastParticiple.split('/')[0].trim() : '—';
+                    html += `
+                        <label class="${isSelected ? 'selected' : ''}" data-verb="${verb}">
+                            <input type="checkbox" ${isSelected ? 'checked' : ''} value="${verb}">
+                            <span class="verb-form">${verb}</span>
+                            <span class="verb-forms">${ps} / ${ppp}</span>
+                            ${isSelected ? '<span class="check-mark">✓</span>' : ''}
+                        </label>
+                    `;
+                });
+
+                if (!html) {
+                    html = `<div class="irregular-empty">${filter ? 'No verbs match "' + filter + '"' : 'No irregular verbs found'}</div>`;
+                }
+
+                irregularGrid.innerHTML = html;
+
+                const total = IRREGULAR_VERBS_SORTED.filter(v => !filterLower || v.toLowerCase().includes(filterLower))
+                    .length;
+                selectedCountSpan.textContent = `${selectedCount} / ${total} selected`;
+                countBadge.textContent = `${selectedCount} selected`;
+
+                irregularGrid.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                    cb.addEventListener('change', function(e) {
+                        e.stopPropagation();
+                        const verb = this.value;
+                        if (this.checked) {
+                            selectedIrregularVerbs.add(verb);
+                        } else {
+                            selectedIrregularVerbs.delete(verb);
+                        }
+                        renderIrregularGrid(irregularSearch.value);
+                        if (irregularOnly) {
+                            generateNewPair();
+                        }
+                    });
+                });
+
+                irregularGrid.querySelectorAll('label').forEach(label => {
+                    label.addEventListener('click', function(e) {
+                        if (e.target.tagName === 'INPUT') return;
+                        const cb = this.querySelector('input[type="checkbox"]');
+                        if (cb) {
+                            cb.checked = !cb.checked;
+                            cb.dispatchEvent(new Event('change'));
+                        }
+                    });
+                });
+            }
+
+            panelHeader.addEventListener('click', function() {
+                panelOpen = !panelOpen;
+                panelBody.classList.toggle('open', panelOpen);
+                toggleIcon.classList.toggle('open', panelOpen);
+            });
+
+            irregularSearch.addEventListener('input', function() {
+                renderIrregularGrid(this.value);
+            });
+
+            applyRangeBtn.addEventListener('click', function() {
+                const from = parseInt(rangeFrom.value) || 1;
+                const to = parseInt(rangeTo.value) || 20;
+                const start = Math.max(1, Math.min(from, IRREGULAR_VERBS_SORTED.length));
+                const end = Math.max(start, Math.min(to, IRREGULAR_VERBS_SORTED.length));
+                const selected = new Set();
+                for (let i = start - 1; i < end; i++) {
+                    if (i < IRREGULAR_VERBS_SORTED.length) {
+                        selected.add(IRREGULAR_VERBS_SORTED[i]);
+                    }
+                }
+                selectedIrregularVerbs = selected;
+                renderIrregularGrid(irregularSearch.value);
+                if (irregularOnly) generateNewPair();
+            });
+
+            selectAllBtn.addEventListener('click', function() {
+                const filter = irregularSearch.value.trim().toLowerCase();
+                const toSelect = IRREGULAR_VERBS_SORTED.filter(v => !filter || v.toLowerCase().includes(filter));
+                toSelect.forEach(v => selectedIrregularVerbs.add(v));
+                renderIrregularGrid(irregularSearch.value);
+                if (irregularOnly) generateNewPair();
+            });
+
+            deselectAllBtn.addEventListener('click', function() {
+                const filter = irregularSearch.value.trim().toLowerCase();
+                const toDeselect = IRREGULAR_VERBS_SORTED.filter(v => !filter || v.toLowerCase().includes(filter));
+                toDeselect.forEach(v => selectedIrregularVerbs.delete(v));
+                renderIrregularGrid(irregularSearch.value);
+                if (irregularOnly) generateNewPair();
+            });
+
+            // --------------------------------------------------------------
+            // 12. GET AVAILABLE VERBS (unchanged)
+            // --------------------------------------------------------------
+            function getAvailableVerbs() {
+                if (irregularOnly) {
+                    if (selectedIrregularVerbs.size === 0) {
+                        return IRREGULAR_VERBS_SORTED;
+                    }
+                    return Array.from(selectedIrregularVerbs);
+                }
+                return VERBS;
+            }
+
+            function getAvailablePronouns() {
+                return Array.from(selectedPronouns);
+            }
+
+            // --------------------------------------------------------------
+            // 13. GENERATE NEW PAIR (unchanged)
+            // --------------------------------------------------------------
+            function generateNewPair() {
+                const verbs = getAvailableVerbs();
+                if (verbs.length === 0) {
+                    subjectDisplay.textContent = "—";
+                    verbDisplay.textContent = "—";
+                    return;
+                }
+                const pronouns = getAvailablePronouns();
+                if (pronouns.length === 0) {
+                    const all = ["I", "you", "he", "she", "it", "we", "they"];
+                    selectedPronouns = new Set(all);
+                    updatePronounChips();
+                    const p = getAvailablePronouns();
+                    currentSubject = p[Math.floor(Math.random() * p.length)];
+                } else {
+                    currentSubject = pronouns[Math.floor(Math.random() * pronouns.length)];
+                }
+                currentVerb = verbs[Math.floor(Math.random() * verbs.length)];
+
+                subjectDisplay.textContent = currentSubject;
+                verbDisplay.textContent = currentVerb;
+                counterEl.textContent = `Pair #${pairCount}`;
+                clearAll();
+            }
+
+            // --------------------------------------------------------------
+            // 14. CLEAR ALL (unchanged)
+            // --------------------------------------------------------------
+            function clearAll() {
+                const inputs = table.querySelectorAll('.cell-input');
+                inputs.forEach(inp => {
+                    inp.value = '';
+                    inp.className = 'cell-input';
+                    const feedback = inp.parentElement.querySelector('.cell-feedback');
+                    if (feedback) {
+                        feedback.textContent = '';
+                        feedback.className = 'cell-feedback';
+                    }
+                });
+            }
+
+            // --------------------------------------------------------------
+            // 15. NORMALIZATION (unchanged)
+            // --------------------------------------------------------------
+            function normalizeForComparison(str) {
+                let s = str.toLowerCase().replace(/\s+/g, ' ').trim();
+                const contractions = {
+                    "don't": "do not",
+                    "doesn't": "does not",
+                    "didn't": "did not",
+                    "won't": "will not",
+                    "shan't": "shall not",
+                    "can't": "cannot",
+                    "mustn't": "must not",
+                    "shouldn't": "should not",
+                    "wouldn't": "would not",
+                    "couldn't": "could not",
+                    "mightn't": "might not",
+                    "needn't": "need not",
+                    "aren't": "are not",
+                    "isn't": "is not",
+                    "wasn't": "was not",
+                    "weren't": "were not",
+                    "haven't": "have not",
+                    "hasn't": "has not",
+                    "hadn't": "had not",
+                    "i'm": "i am",
+                    "you're": "you are",
+                    "he's": "he is",
+                    "she's": "she is",
+                    "it's": "it is",
+                    "we're": "we are",
+                    "they're": "they are",
+                    "i've": "i have",
+                    "you've": "you have",
+                    "we've": "we have",
+                    "they've": "they have",
+                    "i'll": "i will",
+                    "you'll": "you will",
+                    "he'll": "he will",
+                    "she'll": "she will",
+                    "it'll": "it will",
+                    "we'll": "we will",
+                    "they'll": "they will",
+                    "i'd": "i would",
+                    "you'd": "you would",
+                    "he'd": "he would",
+                    "she'd": "she would",
+                    "we'd": "we would",
+                    "they'd": "they would"
+                };
+                for (const [short, long] of Object.entries(contractions)) {
+                    const regex = new RegExp('\\b' + short + '\\b', 'g');
+                    s = s.replace(regex, long);
+                }
+                s = s.replace(/\s+/g, ' ').trim();
+                return s;
+            }
+
+            // --------------------------------------------------------------
+            // 16. CHECK ALL (unchanged)
+            // --------------------------------------------------------------
+            function checkAll() {
+                const cells = table.querySelectorAll('td[data-time]');
+                let correctThisRound = 0;
+                let wrongThisRound = 0;
+
+                cells.forEach(td => {
+                    const time = td.dataset.time;
+                    const aspect = td.dataset.aspect;
+                    const input = td.querySelector('.cell-input');
+                    const feedback = td.querySelector('.cell-feedback');
+                    if (!input || !feedback) return;
+
+                    const userAnswer = input.value.trim();
+                    const correctAnswer = getCorrectAnswer(time, aspect, currentSubject, currentVerb, negativeMode,
+                        questionMode);
+
+                    const normUser = normalizeForComparison(userAnswer);
+                    const normCorrect = normalizeForComparison(correctAnswer);
+
+                    const variants = normCorrect.split('/').map(s => s.trim());
+                    const isCorrect = variants.some(v => normUser === v) || normUser === normCorrect;
+
+                    if (isCorrect) {
+                        input.className = 'cell-input correct';
+                        feedback.textContent = '✓';
+                        feedback.className = 'cell-feedback correct';
+                        correctThisRound++;
+                    } else {
+                        input.className = 'cell-input wrong';
+                        feedback.textContent = '✗';
+                        feedback.className = 'cell-feedback wrong';
+                        wrongThisRound++;
+                    }
+                });
+
+                correctCount += correctThisRound;
+                wrongCount += wrongThisRound;
+                correctCountEl.textContent = correctCount;
+                wrongCountEl.textContent = wrongCount;
+            }
+
+            // --------------------------------------------------------------
+            // 17. EVENT LISTENERS (unchanged)
+            // --------------------------------------------------------------
+            checkAllBtn.addEventListener('click', checkAll);
+
+            clearAllBtn.addEventListener('click', function() {
+                clearAll();
+            });
+
+            newPairBtn.addEventListener('click', function() {
+                pairCount++;
+                generateNewPair();
+                const header = document.querySelector('.pair-header');
+                header.style.transform = 'scale(0.97)';
+                setTimeout(() => { header.style.transform = 'scale(1)'; }, 100);
+            });
+
+            resetStatsBtn.addEventListener('click', function() {
+                correctCount = 0;
+                wrongCount = 0;
+                correctCountEl.textContent = '0';
+                wrongCountEl.textContent = '0';
+            });
+
+            document.addEventListener('keydown', function(e) {
+                const tag = e.target.tagName.toLowerCase();
+                if (tag === 'input' || tag === 'textarea') return;
+
+                if ((e.key === 'n' || e.key === 'N') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    e.preventDefault();
+                    pairCount++;
+                    generateNewPair();
+                }
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    checkAll();
+                }
+            });
+
+            table.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.classList.contains('cell-input')) {
+                    e.preventDefault();
+                    const inputs = Array.from(table.querySelectorAll('.cell-input'));
+                    const idx = inputs.indexOf(e.target);
+                    if (idx >= 0 && idx < inputs.length - 1) {
+                        inputs[idx + 1].focus();
+                    }
+                }
+            });
+
+            // --------------------------------------------------------------
+            // 18. INIT
+            // --------------------------------------------------------------
+            rangeFrom.value = 1;
+            rangeTo.value = 20;
+
+            renderIrregularGrid();
+            generateNewPair();
+            updateToggleUI();
+
+            console.log(`✅ Tense Table loaded with ${VERBS.length} verbs (${IRREGULAR_BASES.size} irregular)`);
+        })();
+    </script>
+</body>
+</html>
