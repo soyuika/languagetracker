@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>PDF Book – True Page Reader</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
+    </script>
+    <style>
+        /* ── Reset & base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f7fa;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app {
+            max-width: 820px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+            padding: 32px 36px 40px;
+        }
+
+        @media (max-width: 600px) {
+            .app {
+                padding: 20px 16px 28px;
+            }
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 span {
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 18px;
+            font-weight: 500;
+            padding: 2px 12px;
+            border-radius: 40px;
+        }
+
+        .header .badge {
+            font-size: 13px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+        .header .badge.cached {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* ── Upload zone ── */
+        .upload-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 18px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.25s, background 0.25s;
+            background: #fafbfc;
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: #a5b4fc;
+            background: #f8faff;
+        }
+
+        .upload-zone.dragover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
+        .upload-zone .icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .upload-zone h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .upload-zone p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .upload-zone .hint {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* ── File info ── */
+        .file-info {
+            display: none;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 18px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .file-info.visible {
+            display: flex;
+        }
+
+        .file-info .name {
+            font-weight: 600;
+            font-size: 15px;
+            flex: 1;
+            min-width: 120px;
+            word-break: break-all;
+        }
+
+        .file-info .meta {
+            font-size: 13px;
+            color: #475569;
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .file-info .remove-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0 4px;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .file-info .remove-btn:hover {
+            color: #ef4444;
+        }
+
+        /* ── Progress ── */
+        .progress-wrap {
+            display: none;
+            margin-top: 18px;
+        }
+
+        .progress-wrap.visible {
+            display: block;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4f46e5, #818cf8);
+            border-radius: 10px;
+            transition: width 0.25s ease;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #475569;
+            margin-top: 6px;
+        }
+
+        /* ── Reader (Single Page) ── */
+        .reader-wrap {
+            display: none;
+            margin-top: 24px;
+            border-radius: 16px;
+            border: 1px solid #e9edf2;
+            overflow: hidden;
+            background: #fafbfc;
+        }
+
+        .reader-wrap.visible {
+            display: block;
+        }
+
+        /* Navigation toolbar */
+        .reader-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e9edf2;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .reader-toolbar .page-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .reader-toolbar .page-nav button {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            line-height: 1.4;
+        }
+
+        .reader-toolbar .page-nav button:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .reader-toolbar .page-nav button:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        .reader-toolbar .page-nav .page-indicator {
+            font-size: 15px;
+            font-weight: 500;
+            min-width: 60px;
+            text-align: center;
+            color: #1e293b;
+        }
+
+        .reader-toolbar .page-nav .goto-wrap {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 4px;
+        }
+
+        .reader-toolbar .page-nav .goto-wrap input {
+            width: 50px;
+            padding: 4px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+            background: white;
+        }
+
+        .reader-toolbar .page-nav .goto-wrap input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .reader-toolbar .page-nav .goto-wrap button {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+        }
+
+        .reader-toolbar .page-nav .goto-wrap button:hover {
+            background: #f8fafc;
+        }
+
+        .reader-toolbar .hint-text {
+            font-size: 14px;
+            color: #64748b;
+            text-align: right;
+        }
+        .reader-toolbar .hint-text strong {
+            color: #1e293b;
+        }
+        .reader-toolbar .hint-text .highlight {
+            background: #fef3c7;
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: #92400e;
+        }
+
+        /* Page content – only the current page is in the DOM */
+        .page-content {
+            padding: 36px 40px;
+            min-height: 420px;
+            max-height: 620px;
+            overflow-y: auto;
+            font-size: 17px;
+            line-height: 1.8;
+            color: #0f172a;
+            background: #ffffff;
+            user-select: text;
+            -webkit-user-select: text;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            font-family: -apple-system, BlinkMacSystemFont, "Georgia", "Times New Roman", serif;
+        }
+
+        .page-content .page-number-label {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4f46e5;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e9edf2;
+        }
+
+        .page-content .page-text {
+            margin: 0;
+            padding: 0;
+        }
+
+        .page-content .page-text:empty::before {
+            content: "(this page is empty)";
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* Scrollbar */
+        .page-content::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .page-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .page-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .page-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* ── Error ── */
+        .error-msg {
+            display: none;
+            margin-top: 16px;
+            padding: 12px 18px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            color: #b91c1c;
+            font-size: 14px;
+        }
+        .error-msg.visible {
+            display: block;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .reader-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .reader-toolbar .page-nav {
+                justify-content: center;
+            }
+            .reader-toolbar .hint-text {
+                text-align: center;
+                font-size: 13px;
+            }
+            .page-content {
+                padding: 20px 18px;
+                font-size: 16px;
+                min-height: 300px;
+                max-height: 440px;
+            }
+            .header h1 {
+                font-size: 22px;
+            }
+            .reader-toolbar .page-nav .goto-wrap input {
+                width: 44px;
+            }
+        }
+
+        /* ── Utilities ── */
+        .hidden {
+            display: none !important;
+        }
+        .fade-in {
+            animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .reader-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+        .reader-empty .big-icon {
+            font-size: 56px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .reader-empty p {
+            font-size: 15px;
+        }
+
+        .cached-badge {
+            display: none;
+            background: #dcfce7;
+            color: #166534;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .cached-badge.visible {
+            display: inline-block;
+        }
+
+        /* ── Instruction box ── */
+        .instruction-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #166534;
+            line-height: 1.6;
+        }
+        .instruction-box strong {
+            color: #064e3b;
+        }
+        .instruction-box .step {
+            display: inline-block;
+            background: #166534;
+            color: white;
+            border-radius: 40px;
+            width: 22px;
+            height: 22px;
+            text-align: center;
+            line-height: 22px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+        .instruction-box .note {
+            margin-top: 6px;
+            color: #047857;
+            font-size: 13px;
+        }
+        .instruction-box .important {
+            background: #fef3c7;
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: #92400e;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app" role="main">
+
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                📖 PDF
+                <span>Book</span>
+                <span class="cached-badge" id="cachedBadge">💾 Cached</span>
+            </h1>
+            <span class="badge">📄 single pages</span>
+        </div>
+
+        <!-- Upload Zone -->
+        <div class="upload-zone" id="uploadZone">
+            <span class="icon">📤</span>
+            <h2>Drop your PDF here</h2>
+            <p>or click to browse</p>
+            <div class="hint">All pages are stored locally · one page at a time</div>
+            <input type="file" id="fileInput" accept=".pdf" />
+        </div>
+
+        <!-- File info -->
+        <div class="file-info" id="fileInfo">
+            <span class="name" id="fileName">file.pdf</span>
+            <div class="meta">
+                <span id="fileSize">📦 0 MB</span>
+                <span id="pageCount">📄 0 pages</span>
+            </div>
+            <button class="remove-btn" id="removeFileBtn" aria-label="Remove file">✕</button>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-wrap" id="progressWrap">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-label">
+                <span id="progressText">Extracting…</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div class="error-msg" id="errorMsg"></div>
+
+        <!-- Reader (Single Page) -->
+        <div class="reader-wrap" id="readerWrap">
+            <div class="instruction-box">
+                <div><span class="step">1</span> <strong>Turn to a page</strong> using ◀/▶ or the <strong>Go to</strong> box.</div>
+                <div><span class="step">2</span> <span class="important">Exit Safari Reader View</span> (tap the <span class="important">📄</span> icon) and <span class="important">re-enter</span> it (the URL changed, so Safari loads the new text).</div>
+                <div><span class="step">3</span> Tap the <strong>Listen to Page</strong> speaker icon (<span class="important">🔊</span>) — it reads <em>only</em> this page.</div>
+                <div class="note">💡 The URL hash updates automatically (e.g. <code>#page=12</code>) so Safari knows the text changed.</div>
+            </div>
+
+            <div class="reader-toolbar">
+                <div class="page-nav">
+                    <button id="prevPageBtn" aria-label="Previous page">◀</button>
+                    <span class="page-indicator" id="pageIndicator">1 / 1</span>
+                    <button id="nextPageBtn" aria-label="Next page">▶</button>
+                    <div class="goto-wrap">
+                        <input type="number" id="pageInput" min="1" max="9999" placeholder="Go" />
+                        <button id="goToPageBtn">Go</button>
+                    </div>
+                </div>
+                <div class="hint-text">
+                    <strong>🔄 Toggle Reader View</strong> after each page turn.
+                </div>
+            </div>
+
+            <div class="page-content" id="pageContent">
+                <div class="reader-empty">
+                    <span class="big-icon">📖</span>
+                    <p>Upload a PDF to start reading page by page.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ── Storage ──
+            const STORAGE_KEY = 'pdfReaderData_bookPages';
+
+            // ── DOM refs ──
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const pageCount = document.getElementById('pageCount');
+            const removeFileBtn = document.getElementById('removeFileBtn');
+            const progressWrap = document.getElementById('progressWrap');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const progressPercent = document.getElementById('progressPercent');
+            const errorMsg = document.getElementById('errorMsg');
+            const readerWrap = document.getElementById('readerWrap');
+            const pageContent = document.getElementById('pageContent');
+            const prevPageBtn = document.getElementById('prevPageBtn');
+            const nextPageBtn = document.getElementById('nextPageBtn');
+            const pageIndicator = document.getElementById('pageIndicator');
+            const pageInput = document.getElementById('pageInput');
+            const goToPageBtn = document.getElementById('goToPageBtn');
+            const cachedBadge = document.getElementById('cachedBadge');
+
+            // ── State ──
+            let pageTexts = [];
+            let totalPages = 0;
+            let currentPage = 0; // 0‑based index
+            let isProcessing = false;
+
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+            // ── Storage helpers ──
+            function saveToStorage(fileName, fileSizeBytes, pages) {
+                try {
+                    const data = {
+                        fileName: fileName,
+                        fileSize: fileSizeBytes,
+                        pageTexts: pages,
+                        totalPages: pages.length,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                    cachedBadge.classList.add('visible');
+                } catch (e) {
+                    console.warn('Could not save to localStorage', e);
+                }
+            }
+
+            function loadFromStorage() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (!raw) return null;
+                    const data = JSON.parse(raw);
+                    if (data && data.pageTexts && data.pageTexts.length > 0) {
+                        return data;
+                    }
+                    return null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function clearStorage() {
+                localStorage.removeItem(STORAGE_KEY);
+                cachedBadge.classList.remove('visible');
+            }
+
+            // ── Helpers ──
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+
+            function showError(msg) {
+                errorMsg.textContent = msg;
+                errorMsg.classList.add('visible');
+                setTimeout(() => errorMsg.classList.remove('visible'), 8000);
+            }
+
+            function clearError() {
+                errorMsg.classList.remove('visible');
+                errorMsg.textContent = '';
+            }
+
+            // ── Display a single page (REPLACES DOM content) ──
+            function displayPage(index) {
+                if (!pageTexts.length || index < 0 || index >= pageTexts.length) return;
+                currentPage = index;
+                const text = pageTexts[index] || '';
+
+                // Completely replace the content
+                const container = document.createElement('div');
+                container.className = 'fade-in';
+
+                // Page number header
+                const label = document.createElement('div');
+                label.className = 'page-number-label';
+                label.textContent = `Page ${index + 1} of ${totalPages}`;
+                container.appendChild(label);
+
+                // Page text
+                const textP = document.createElement('p');
+                textP.className = 'page-text';
+                if (text.trim() === '') {
+                    textP.textContent = '(this page is empty)';
+                    textP.style.color = '#94a3b8';
+                    textP.style.fontStyle = 'italic';
+                } else {
+                    textP.textContent = text;
+                }
+                container.appendChild(textP);
+
+                // Swap
+                pageContent.innerHTML = '';
+                pageContent.appendChild(container);
+
+                // Update indicator and buttons
+                pageIndicator.textContent = `${index + 1} / ${totalPages}`;
+                prevPageBtn.disabled = (index === 0);
+                nextPageBtn.disabled = (index === totalPages - 1);
+
+                // Update URL hash WITHOUT reloading the page.
+                // This forces Safari Reader View to re-parse the DOM when toggled.
+                try {
+                    history.pushState(null, '', '#page=' + (index + 1));
+                } catch (e) {
+                    // Fallback for older browsers
+                    window.location.hash = 'page=' + (index + 1);
+                }
+
+                // Scroll to top of the page content
+                pageContent.scrollTop = 0;
+            }
+
+            // ── Go to page from input ──
+            function goToPage() {
+                const val = parseInt(pageInput.value, 10);
+                if (isNaN(val) || val < 1 || val > totalPages) {
+                    showError(`Please enter a page number between 1 and ${totalPages}.`);
+                    return;
+                }
+                displayPage(val - 1);
+                pageInput.value = '';
+                clearError();
+            }
+
+            // ── Navigation ──
+            function prevPage() {
+                if (currentPage > 0) displayPage(currentPage - 1);
+            }
+
+            function nextPage() {
+                if (currentPage < totalPages - 1) displayPage(currentPage + 1);
+            }
+
+            // ── Reset reader UI ──
+            function resetReaderUI() {
+                pageTexts = [];
+                totalPages = 0;
+                currentPage = 0;
+                readerWrap.classList.remove('visible');
+                pageContent.innerHTML = `
+                    <div class="reader-empty">
+                        <span class="big-icon">📖</span>
+                        <p>Upload a PDF to start reading page by page.</p>
+                    </div>
+                `;
+                pageIndicator.textContent = '0 / 0';
+                prevPageBtn.disabled = true;
+                nextPageBtn.disabled = true;
+                // Clear hash
+                if (history.pushState) {
+                    history.pushState(null, '', window.location.pathname);
+                }
+            }
+
+            // ── Load from cache ──
+            function loadFromCache() {
+                const data = loadFromStorage();
+                if (!data) return false;
+                pageTexts = data.pageTexts;
+                totalPages = data.totalPages;
+                fileName.textContent = data.fileName;
+                fileSize.textContent = '📦 ' + formatFileSize(data.fileSize);
+                pageCount.textContent = '📄 ' + totalPages + ' pages';
+                fileInfo.classList.add('visible');
+                readerWrap.classList.add('visible');
+
+                // Check if there's a hash for a specific page (e.g., #page=5)
+                let startPage = 0;
+                const hash = window.location.hash;
+                if (hash && hash.startsWith('#page=')) {
+                    const pageNum = parseInt(hash.replace('#page=', ''), 10);
+                    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+                        startPage = pageNum - 1;
+                    }
+                }
+                displayPage(startPage);
+                cachedBadge.classList.add('visible');
+                return true;
+            }
+
+            // ── Extraction ──
+            async function extractTextFromPDF(file) {
+                if (isProcessing) return;
+                isProcessing = true;
+                resetReaderUI();
+                clearError();
+
+                fileInfo.classList.add('visible');
+                fileName.textContent = file.name;
+                fileSize.textContent = '📦 ' + formatFileSize(file.size);
+
+                progressWrap.classList.add('visible');
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Loading PDF…';
+                progressPercent.textContent = '0%';
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    const total = pdf.numPages;
+                    pageCount.textContent = '📄 ' + total + ' pages';
+
+                    if (total === 0) throw new Error('PDF has no pages.');
+
+                    const extracted = [];
+                    for (let i = 1; i <= total; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        const pageText = content.items.map(item => item.str).join(' ');
+                        const trimmed = pageText.replace(/\s+/g, ' ').trim();
+                        extracted.push(trimmed);
+
+                        const pct = Math.round((i / total) * 100);
+                        progressFill.style.width = pct + '%';
+                        progressPercent.textContent = pct + '%';
+                        progressText.textContent = `Page ${i} of ${total}`;
+                        await new Promise(r => requestAnimationFrame(r));
+                    }
+
+                    pageTexts = extracted;
+                    totalPages = total;
+                    saveToStorage(file.name, file.size, pageTexts);
+
+                    readerWrap.classList.add('visible');
+                    displayPage(0);
+
+                    progressFill.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    progressText.textContent = `✓ Extracted ${totalPages} pages`;
+                    setTimeout(() => progressWrap.classList.remove('visible'), 1200);
+
+                } catch (err) {
+                    console.error(err);
+                    showError('❌ ' + (err.message || 'Extraction failed.'));
+                    resetReaderUI();
+                } finally {
+                    isProcessing = false;
+                }
+            }
+
+            // ── File handler ──
+            function handleFile(file) {
+                if (!file || file.type !== 'application/pdf') {
+                    showError('Please select a valid PDF.');
+                    return;
+                }
+                if (isProcessing) {
+                    showError('Already processing. Please wait.');
+                    return;
+                }
+                clearStorage();
+                extractTextFromPDF(file);
+            }
+
+            // ── Remove file ──
+            function removeFile() {
+                if (isProcessing) {
+                    showError('Please wait.');
+                    return;
+                }
+                clearStorage();
+                fileInput.value = '';
+                fileInfo.classList.remove('visible');
+                progressWrap.classList.remove('visible');
+                resetReaderUI();
+                clearError();
+                cachedBadge.classList.remove('visible');
+            }
+
+            // ── Event listeners ──
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files.length > 0) {
+                    handleFile(this.files[0]);
+                }
+                this.value = '';
+            });
+
+            uploadZone.addEventListener('dragover', (e) => { e.preventDefault();
+                uploadZone.classList.add('dragover'); });
+            uploadZone.addEventListener('dragleave', () => { uploadZone.classList.remove('dragover'); });
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+            });
+
+            removeFileBtn.addEventListener('click', removeFile);
+
+            prevPageBtn.addEventListener('click', prevPage);
+            nextPageBtn.addEventListener('click', nextPage);
+
+            goToPageBtn.addEventListener('click', goToPage);
+            pageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    goToPage();
+                }
+            });
+
+            // Keyboard shortcuts: left/right arrows
+            document.addEventListener('keydown', (e) => {
+                if (readerWrap.classList.contains('visible') && e.target.tagName !== 'INPUT') {
+                    if (e.key === 'ArrowLeft') { prevPage();
+                        e.preventDefault(); }
+                    if (e.key === 'ArrowRight') { nextPage();
+                        e.preventDefault(); }
+                }
+            });
+
+            // ── Init: try loading from cache ──
+            const loaded = loadFromCache();
+            if (!loaded) {
+                resetReaderUI();
+                console.log('📖 No cached PDF. Upload a file.');
+            } else {
+                console.log('📖 Loaded from cache. Current hash:', window.location.hash);
+            }
+        })();
+    </script>
+
+</body>
+</html>
