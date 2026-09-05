@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>PDF Text Extractor</title>
+    <!-- PDF.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
+    </script>
+
+    <style>
+        /* ── Reset & base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f7fa;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app {
+            max-width: 960px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+            padding: 32px 36px 40px;
+            transition: box-shadow 0.2s;
+        }
+
+        @media (max-width: 600px) {
+            .app {
+                padding: 20px 16px 28px;
+            }
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 span {
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 18px;
+            font-weight: 500;
+            padding: 2px 12px;
+            border-radius: 40px;
+            letter-spacing: 0;
+        }
+
+        .header .badge {
+            font-size: 13px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+
+        /* ── Upload zone ── */
+        .upload-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 18px;
+            padding: 48px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.25s, background 0.25s;
+            background: #fafbfc;
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: #a5b4fc;
+            background: #f8faff;
+        }
+
+        .upload-zone.dragover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
+        .upload-zone .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .upload-zone h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .upload-zone p {
+            color: #64748b;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .upload-zone .hint {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* ── File info ── */
+        .file-info {
+            display: none;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 20px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        .file-info.visible {
+            display: flex;
+        }
+
+        .file-info .name {
+            font-weight: 600;
+            font-size: 15px;
+            flex: 1;
+            min-width: 120px;
+            word-break: break-all;
+        }
+
+        .file-info .meta {
+            font-size: 13px;
+            color: #475569;
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .file-info .meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .file-info .remove-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0 4px;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .file-info .remove-btn:hover {
+            color: #ef4444;
+        }
+
+        /* ── Progress ── */
+        .progress-wrap {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-wrap.visible {
+            display: block;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4f46e5, #818cf8);
+            border-radius: 10px;
+            transition: width 0.25s ease;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #475569;
+            margin-top: 6px;
+        }
+
+        /* ── Text output ── */
+        .output-wrap {
+            display: none;
+            margin-top: 24px;
+            border-radius: 16px;
+            border: 1px solid #e9edf2;
+            overflow: hidden;
+            background: #fafbfc;
+        }
+
+        .output-wrap.visible {
+            display: block;
+        }
+
+        .output-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e9edf2;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .output-toolbar .stats {
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .output-toolbar .stats strong {
+            color: #1e293b;
+        }
+
+        .output-toolbar .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .output-toolbar .actions button {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 5px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .output-toolbar .actions button:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .output-toolbar .actions button:active {
+            background: #e9edf2;
+        }
+
+        .text-container {
+            padding: 24px 28px;
+            max-height: 580px;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.75;
+            color: #0f172a;
+            background: #ffffff;
+            user-select: text;
+            -webkit-user-select: text;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            font-family: -apple-system, BlinkMacSystemFont, "Georgia", "Times New Roman", serif;
+        }
+
+        .text-container:focus {
+            outline: none;
+        }
+
+        .text-container .page-divider {
+            display: block;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: #94a3b8;
+            letter-spacing: 2px;
+            padding: 18px 0 12px;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .text-container .page-divider:first-of-type {
+            padding-top: 0;
+            border-top: none;
+        }
+
+        .text-container .page-divider::before {
+            content: "⸻ ";
+        }
+        .text-container .page-divider::after {
+            content: " ⸻";
+        }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px 36px;
+            color: #94a3b8;
+        }
+
+        .empty-state .big-icon {
+            font-size: 56px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .empty-state p {
+            font-size: 15px;
+        }
+
+        /* ── Scrollbar styling ── */
+        .text-container::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .text-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .text-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .text-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* ── Responsive tweaks ── */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 21px;
+            }
+            .header h1 span {
+                font-size: 14px;
+                padding: 1px 10px;
+            }
+            .upload-zone {
+                padding: 32px 16px;
+            }
+            .upload-zone .icon {
+                font-size: 36px;
+            }
+            .upload-zone h2 {
+                font-size: 17px;
+            }
+            .text-container {
+                padding: 16px 18px;
+                font-size: 15px;
+                max-height: 440px;
+            }
+            .output-toolbar {
+                padding: 10px 14px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .output-toolbar .actions {
+                justify-content: flex-start;
+            }
+            .file-info {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .file-info .meta {
+                justify-content: flex-start;
+            }
+        }
+
+        /* ── Utilities ── */
+        .hidden {
+            display: none !important;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Error message ── */
+        .error-msg {
+            display: none;
+            margin-top: 16px;
+            padding: 12px 18px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            color: #b91c1c;
+            font-size: 14px;
+        }
+        .error-msg.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app" role="main">
+
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                📄 PDF Text
+                <span>Extract</span>
+            </h1>
+            <span class="badge">⚡ in‑browser · no upload</span>
+        </div>
+
+        <!-- Upload Zone -->
+        <div class="upload-zone" id="uploadZone">
+            <span class="icon">📤</span>
+            <h2>Drop your PDF here</h2>
+            <p>or click to browse</p>
+            <div class="hint">Supports large files · all text extracted</div>
+            <input type="file" id="fileInput" accept=".pdf" />
+        </div>
+
+        <!-- File info -->
+        <div class="file-info" id="fileInfo">
+            <span class="name" id="fileName">file.pdf</span>
+            <div class="meta">
+                <span id="fileSize">📦 0 MB</span>
+                <span id="pageCount">📄 0 pages</span>
+            </div>
+            <button class="remove-btn" id="removeFileBtn" aria-label="Remove file">✕</button>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-wrap" id="progressWrap">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-label">
+                <span id="progressText">Extracting…</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div class="error-msg" id="errorMsg"></div>
+
+        <!-- Output -->
+        <div class="output-wrap" id="outputWrap">
+            <div class="output-toolbar">
+                <div class="stats">
+                    <strong id="charCount">0</strong> characters ·
+                    <strong id="wordCount">0</strong> words ·
+                    <strong id="pageCountOut">0</strong> pages
+                </div>
+                <div class="actions">
+                    <button id="copyBtn" title="Copy all text">📋 Copy</button>
+                    <button id="scrollTopBtn" title="Scroll to top">⬆ Top</button>
+                </div>
+            </div>
+            <div class="text-container" id="textContainer" role="document">
+                <div class="empty-state" id="emptyState">
+                    <span class="big-icon">📖</span>
+                    <p>Extracted text will appear here.<br />Select any text and use your iPhone’s <strong>Speak Selection</strong> to read it aloud.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ── DOM refs ──
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const pageCount = document.getElementById('pageCount');
+            const removeFileBtn = document.getElementById('removeFileBtn');
+            const progressWrap = document.getElementById('progressWrap');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const progressPercent = document.getElementById('progressPercent');
+            const errorMsg = document.getElementById('errorMsg');
+            const outputWrap = document.getElementById('outputWrap');
+            const textContainer = document.getElementById('textContainer');
+            const emptyState = document.getElementById('emptyState');
+            const charCount = document.getElementById('charCount');
+            const wordCount = document.getElementById('wordCount');
+            const pageCountOut = document.getElementById('pageCountOut');
+            const copyBtn = document.getElementById('copyBtn');
+            const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+            // ── State ──
+            let currentFile = null;
+            let isProcessing = false;
+            let extractedPages = 0;
+            let totalPages = 0;
+
+            // ── PDF.js setup ──
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+            // ── Helpers ──
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+
+            function showError(msg) {
+                errorMsg.textContent = msg;
+                errorMsg.classList.add('visible');
+                setTimeout(() => errorMsg.classList.remove('visible'), 8000);
+            }
+
+            function clearError() {
+                errorMsg.classList.remove('visible');
+                errorMsg.textContent = '';
+            }
+
+            function resetUI(keepFileInfo = false) {
+                if (!keepFileInfo) {
+                    fileInfo.classList.remove('visible');
+                    fileName.textContent = '';
+                    fileSize.textContent = '📦 0 MB';
+                    pageCount.textContent = '📄 0 pages';
+                }
+                progressWrap.classList.remove('visible');
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Extracting…';
+                progressPercent.textContent = '0%';
+                outputWrap.classList.remove('visible');
+                textContainer.innerHTML = '';
+                // re-add empty state
+                const es = document.createElement('div');
+                es.className = 'empty-state';
+                es.id = 'emptyState';
+                es.innerHTML = `
+                    <span class="big-icon">📖</span>
+                    <p>Extracted text will appear here.<br />Select any text and use your iPhone’s <strong>Speak Selection</strong> to read it aloud.</p>
+                `;
+                textContainer.appendChild(es);
+                charCount.textContent = '0';
+                wordCount.textContent = '0';
+                pageCountOut.textContent = '0';
+                clearError();
+                extractedPages = 0;
+                totalPages = 0;
+            }
+
+            // ── Core extraction ──
+            async function extractTextFromPDF(file) {
+                if (isProcessing) return;
+                isProcessing = true;
+
+                // Reset output
+                resetUI(false);
+                clearError();
+
+                // Show file info
+                fileInfo.classList.add('visible');
+                fileName.textContent = file.name;
+                fileSize.textContent = '📦 ' + formatFileSize(file.size);
+
+                // Show progress
+                progressWrap.classList.add('visible');
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Loading PDF…';
+                progressPercent.textContent = '0%';
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    totalPages = pdf.numPages;
+                    pageCount.textContent = '📄 ' + totalPages + ' pages';
+
+                    if (totalPages === 0) {
+                        throw new Error('This PDF appears to have no pages.');
+                    }
+
+                    // Prepare output container
+                    const container = document.createElement('div');
+                    container.className = 'fade-in';
+                    let fullText = '';
+                    let pageTexts = [];
+
+                    // Process each page
+                    for (let i = 1; i <= totalPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        const pageText = content.items.map(item => item.str).join(' ');
+
+                        // Trim extra spaces but preserve paragraph structure
+                        const trimmed = pageText.replace(/\s+/g, ' ').trim();
+                        pageTexts.push(trimmed);
+
+                        // Update progress
+                        const pct = Math.round((i / totalPages) * 100);
+                        progressFill.style.width = pct + '%';
+                        progressPercent.textContent = pct + '%';
+                        progressText.textContent = `Page ${i} of ${totalPages}`;
+
+                        // Yield to UI
+                        await new Promise(r => requestAnimationFrame(r));
+                    }
+
+                    // Build final display with page dividers
+                    const frag = document.createDocumentFragment();
+                    let totalChars = 0;
+                    let totalWords = 0;
+
+                    for (let i = 0; i < pageTexts.length; i++) {
+                        const text = pageTexts[i];
+                        if (text.length > 0) {
+                            const divider = document.createElement('div');
+                            divider.className = 'page-divider';
+                            divider.textContent = `Page ${i + 1}`;
+                            frag.appendChild(divider);
+
+                            const p = document.createElement('p');
+                            p.textContent = text;
+                            p.style.marginBottom = '16px';
+                            frag.appendChild(p);
+
+                            totalChars += text.length;
+                            totalWords += text.split(/\s+/).filter(w => w.length > 0).length;
+                        } else {
+                            // Empty page – still show a divider
+                            const divider = document.createElement('div');
+                            divider.className = 'page-divider';
+                            divider.textContent = `Page ${i + 1} (empty)`;
+                            frag.appendChild(divider);
+                        }
+                    }
+
+                    // Remove the old empty state
+                    const oldEmpty = document.getElementById('emptyState');
+                    if (oldEmpty) oldEmpty.remove();
+
+                    // Append new content
+                    textContainer.appendChild(frag);
+
+                    // Update stats
+                    charCount.textContent = totalChars.toLocaleString();
+                    wordCount.textContent = totalWords.toLocaleString();
+                    pageCountOut.textContent = totalPages;
+
+                    // Show output
+                    outputWrap.classList.add('visible');
+
+                    // Scroll to top of text
+                    textContainer.scrollTop = 0;
+
+                    // Progress complete
+                    progressFill.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    progressText.textContent = `✓ Extracted ${totalPages} pages`;
+
+                    // Hide progress after a moment
+                    setTimeout(() => {
+                        progressWrap.classList.remove('visible');
+                    }, 1200);
+
+                    extractedPages = totalPages;
+
+                } catch (err) {
+                    console.error('Extraction error:', err);
+                    showError('❌ ' + (err.message || 'Failed to extract text from this PDF.'));
+                    // Show empty state again
+                    const es = document.getElementById('emptyState');
+                    if (!es) {
+                        const newEs = document.createElement('div');
+                        newEs.className = 'empty-state';
+                        newEs.id = 'emptyState';
+                        newEs.innerHTML = `
+                            <span class="big-icon">⚠️</span>
+                            <p>Something went wrong. Please try a different PDF.</p>
+                        `;
+                        textContainer.innerHTML = '';
+                        textContainer.appendChild(newEs);
+                    }
+                    outputWrap.classList.remove('visible');
+                    progressWrap.classList.remove('visible');
+                } finally {
+                    isProcessing = false;
+                }
+            }
+
+            // ── File handler ──
+            function handleFile(file) {
+                if (!file || file.type !== 'application/pdf') {
+                    showError('Please select a valid PDF file.');
+                    return;
+                }
+                if (isProcessing) {
+                    showError('Already processing a file. Please wait.');
+                    return;
+                }
+
+                currentFile = file;
+                resetUI(false);
+                extractTextFromPDF(file);
+            }
+
+            // ── Remove file ──
+            function removeFile() {
+                if (isProcessing) {
+                    showError('Please wait for extraction to finish.');
+                    return;
+                }
+                currentFile = null;
+                fileInput.value = '';
+                resetUI(false);
+                fileInfo.classList.remove('visible');
+                progressWrap.classList.remove('visible');
+                outputWrap.classList.remove('visible');
+                // Show empty state
+                const container = textContainer;
+                container.innerHTML = '';
+                const es = document.createElement('div');
+                es.className = 'empty-state';
+                es.id = 'emptyState';
+                es.innerHTML = `
+                    <span class="big-icon">📖</span>
+                    <p>Extracted text will appear here.<br />Select any text and use your iPhone’s <strong>Speak Selection</strong> to read it aloud.</p>
+                `;
+                container.appendChild(es);
+                charCount.textContent = '0';
+                wordCount.textContent = '0';
+                pageCountOut.textContent = '0';
+                clearError();
+            }
+
+            // ── Copy text ──
+            function copyText() {
+                const textNodes = textContainer.querySelectorAll('p');
+                if (!textNodes.length) {
+                    showError('No text to copy.');
+                    return;
+                }
+                let allText = '';
+                textNodes.forEach(p => {
+                    allText += p.textContent + '\n\n';
+                });
+                // Remove trailing newlines
+                allText = allText.replace(/\n{3,}$/, '\n');
+
+                if (!allText.trim()) {
+                    showError('No text content to copy.');
+                    return;
+                }
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(allText).then(() => {
+                        // brief visual feedback
+                        copyBtn.textContent = '✅ Copied!';
+                        setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 1800);
+                    }).catch(() => {
+                        fallbackCopy(allText);
+                    });
+                } else {
+                    fallbackCopy(allText);
+                }
+            }
+
+            function fallbackCopy(text) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                ta.style.top = '0';
+                ta.style.width = '1px';
+                ta.style.height = '1px';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    const ok = document.execCommand('copy');
+                    if (ok) {
+                        copyBtn.textContent = '✅ Copied!';
+                        setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 1800);
+                    } else {
+                        showError('Could not copy. Please select and copy manually.');
+                    }
+                } catch (e) {
+                    showError('Could not copy. Please select and copy manually.');
+                }
+                document.body.removeChild(ta);
+            }
+
+            // ── Scroll to top ──
+            function scrollToTop() {
+                textContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            // ── Event listeners ──
+
+            // File input
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files.length > 0) {
+                    handleFile(this.files[0]);
+                }
+                // Reset so the same file can be re-selected
+                this.value = '';
+            });
+
+            // Drag and drop
+            uploadZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files && files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+
+            // Remove file
+            removeFileBtn.addEventListener('click', removeFile);
+
+            // Copy button
+            copyBtn.addEventListener('click', copyText);
+
+            // Scroll top button
+            scrollTopBtn.addEventListener('click', scrollToTop);
+
+            // Keyboard shortcut: Cmd+A / Ctrl+A should work naturally in the text container
+            // Nothing special needed – it's a normal div with text.
+
+            // ── Handle window resize for scrollbar etc ──
+            // no-op
+
+            console.log('📄 PDF Text Extractor ready – drop a PDF to begin.');
+            console.log('ℹ️  On iPhone: select text → Speak Selection');
+        })();
+    </script>
+
+</body>
+</html>
