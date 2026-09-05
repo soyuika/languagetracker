@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>PDF Reader – Custom Ranges</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
+    </script>
+    <style>
+        /* ── Reset & base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f7fa;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app {
+            max-width: 820px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+            padding: 32px 36px 40px;
+        }
+
+        @media (max-width: 600px) {
+            .app {
+                padding: 20px 16px 28px;
+            }
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 span {
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 18px;
+            font-weight: 500;
+            padding: 2px 12px;
+            border-radius: 40px;
+        }
+
+        .header .badge {
+            font-size: 13px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+        .header .badge.cached {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* ── Upload zone ── */
+        .upload-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 18px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.25s, background 0.25s;
+            background: #fafbfc;
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: #a5b4fc;
+            background: #f8faff;
+        }
+
+        .upload-zone.dragover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
+        .upload-zone .icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .upload-zone h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .upload-zone p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .upload-zone .hint {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* ── File info ── */
+        .file-info {
+            display: none;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 18px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .file-info.visible {
+            display: flex;
+        }
+
+        .file-info .name {
+            font-weight: 600;
+            font-size: 15px;
+            flex: 1;
+            min-width: 120px;
+            word-break: break-all;
+        }
+
+        .file-info .meta {
+            font-size: 13px;
+            color: #475569;
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .file-info .remove-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0 4px;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .file-info .remove-btn:hover {
+            color: #ef4444;
+        }
+
+        /* ── Progress ── */
+        .progress-wrap {
+            display: none;
+            margin-top: 18px;
+        }
+
+        .progress-wrap.visible {
+            display: block;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4f46e5, #818cf8);
+            border-radius: 10px;
+            transition: width 0.25s ease;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #475569;
+            margin-top: 6px;
+        }
+
+        /* ── Reader (Range) ── */
+        .reader-wrap {
+            display: none;
+            margin-top: 24px;
+            border-radius: 16px;
+            border: 1px solid #e9edf2;
+            overflow: hidden;
+            background: #fafbfc;
+        }
+
+        .reader-wrap.visible {
+            display: block;
+        }
+
+        /* Navigation toolbar */
+        .reader-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e9edf2;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .reader-toolbar .range-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .reader-toolbar .range-controls label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .reader-toolbar .range-controls input {
+            width: 50px;
+            padding: 4px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+            background: white;
+        }
+
+        .reader-toolbar .range-controls input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .reader-toolbar .range-controls button {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+        }
+
+        .reader-toolbar .range-controls button:hover {
+            background: #f8fafc;
+        }
+
+        .reader-toolbar .range-controls .range-indicator {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+            margin-left: 4px;
+        }
+
+        .reader-toolbar .hint-text {
+            font-size: 14px;
+            color: #64748b;
+            text-align: right;
+        }
+        .reader-toolbar .hint-text strong {
+            color: #1e293b;
+        }
+        .reader-toolbar .hint-text .highlight {
+            background: #fef3c7;
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: #92400e;
+        }
+
+        /* Page content – combined text for the range */
+        .page-content {
+            padding: 36px 40px;
+            min-height: 420px;
+            max-height: 620px;
+            overflow-y: auto;
+            font-size: 17px;
+            line-height: 1.8;
+            color: #0f172a;
+            background: #ffffff;
+            user-select: text;
+            -webkit-user-select: text;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            font-family: -apple-system, BlinkMacSystemFont, "Georgia", "Times New Roman", serif;
+        }
+
+        .page-content .range-label {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: #4f46e5;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e9edf2;
+        }
+
+        .page-content .page-heading {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: #64748b;
+            margin-top: 20px;
+            margin-bottom: 6px;
+            border-top: 1px dashed #e9edf2;
+            padding-top: 12px;
+        }
+
+        .page-content .page-heading:first-of-type {
+            margin-top: 0;
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .page-content .page-text {
+            margin: 0 0 8px 0;
+            padding: 0;
+        }
+
+        .page-content .page-text:empty::before {
+            content: "(empty page)";
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* Scrollbar */
+        .page-content::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .page-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .page-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .page-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* ── Error ── */
+        .error-msg {
+            display: none;
+            margin-top: 16px;
+            padding: 12px 18px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            color: #b91c1c;
+            font-size: 14px;
+        }
+        .error-msg.visible {
+            display: block;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .reader-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .reader-toolbar .range-controls {
+                justify-content: center;
+            }
+            .reader-toolbar .hint-text {
+                text-align: center;
+                font-size: 13px;
+            }
+            .page-content {
+                padding: 20px 18px;
+                font-size: 16px;
+                min-height: 300px;
+                max-height: 440px;
+            }
+            .header h1 {
+                font-size: 22px;
+            }
+            .reader-toolbar .range-controls input {
+                width: 44px;
+            }
+        }
+
+        /* ── Utilities ── */
+        .hidden {
+            display: none !important;
+        }
+        .fade-in {
+            animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .reader-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+        .reader-empty .big-icon {
+            font-size: 56px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .reader-empty p {
+            font-size: 15px;
+        }
+
+        .cached-badge {
+            display: none;
+            background: #dcfce7;
+            color: #166534;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .cached-badge.visible {
+            display: inline-block;
+        }
+
+        /* ── Instruction box ── */
+        .instruction-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #166534;
+            line-height: 1.6;
+        }
+        .instruction-box strong {
+            color: #064e3b;
+        }
+        .instruction-box .step {
+            display: inline-block;
+            background: #166534;
+            color: white;
+            border-radius: 40px;
+            width: 22px;
+            height: 22px;
+            text-align: center;
+            line-height: 22px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+        .instruction-box .note {
+            margin-top: 6px;
+            color: #047857;
+            font-size: 13px;
+        }
+        .instruction-box .important {
+            background: #fef3c7;
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: #92400e;
+            font-weight: 600;
+        }
+        code {
+            background: #e9edf2;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app" role="main">
+
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                📖 PDF
+                <span>Reader</span>
+                <span class="cached-badge" id="cachedBadge">💾 Cached</span>
+            </h1>
+            <span class="badge">📚 custom ranges</span>
+        </div>
+
+        <!-- Upload Zone -->
+        <div class="upload-zone" id="uploadZone">
+            <span class="icon">📤</span>
+            <h2>Drop your PDF here</h2>
+            <p>or click to browse</p>
+            <div class="hint">All pages stored locally · choose any range to listen</div>
+            <input type="file" id="fileInput" accept=".pdf" />
+        </div>
+
+        <!-- File info -->
+        <div class="file-info" id="fileInfo">
+            <span class="name" id="fileName">file.pdf</span>
+            <div class="meta">
+                <span id="fileSize">📦 0 MB</span>
+                <span id="pageCount">📄 0 pages</span>
+            </div>
+            <button class="remove-btn" id="removeFileBtn" aria-label="Remove file">✕</button>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-wrap" id="progressWrap">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-label">
+                <span id="progressText">Extracting…</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div class="error-msg" id="errorMsg"></div>
+
+        <!-- Reader (Range) -->
+        <div class="reader-wrap" id="readerWrap">
+            <div class="instruction-box">
+                <div><span class="step">1</span> Set the <strong>page range</strong> you want to listen to (e.g., 5–12).</div>
+                <div><span class="step">2</span> Click <strong>"Apply Range"</strong> – the text of all those pages is merged.</div>
+                <div><span class="step">3</span> <span class="important">Exit Safari Reader View</span> (tap the <span class="important">📄</span> icon) and <span class="important">re-enter</span> it (URL changes, so Safari loads the merged text).</div>
+                <div><span class="step">4</span> Tap <strong>Listen to Page</strong> (<span class="important">🔊</span>) – it reads the whole range in one go!</div>
+                <div class="note">💡 Change the range anytime – the URL updates automatically (e.g., <code>#range=5-12</code>).</div>
+            </div>
+
+            <div class="reader-toolbar">
+                <div class="range-controls">
+                    <label for="startInput">From</label>
+                    <input type="number" id="startInput" min="1" max="9999" value="1" />
+                    <label for="endInput">To</label>
+                    <input type="number" id="endInput" min="1" max="9999" value="1" />
+                    <button id="applyRangeBtn">Apply Range</button>
+                    <span class="range-indicator" id="rangeIndicator">Pages 1–1</span>
+                </div>
+                <div class="hint-text">
+                    <strong>🔄 Toggle Reader View</strong> after each range change.
+                </div>
+            </div>
+
+            <div class="page-content" id="pageContent">
+                <div class="reader-empty">
+                    <span class="big-icon">📖</span>
+                    <p>Upload a PDF, then set a range and click Apply.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ── Storage ──
+            const STORAGE_KEY = 'pdfReaderData_ranges';
+
+            // ── DOM refs ──
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const pageCount = document.getElementById('pageCount');
+            const removeFileBtn = document.getElementById('removeFileBtn');
+            const progressWrap = document.getElementById('progressWrap');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const progressPercent = document.getElementById('progressPercent');
+            const errorMsg = document.getElementById('errorMsg');
+            const readerWrap = document.getElementById('readerWrap');
+            const pageContent = document.getElementById('pageContent');
+            const startInput = document.getElementById('startInput');
+            const endInput = document.getElementById('endInput');
+            const applyRangeBtn = document.getElementById('applyRangeBtn');
+            const rangeIndicator = document.getElementById('rangeIndicator');
+            const cachedBadge = document.getElementById('cachedBadge');
+
+            // ── State ──
+            let pageTexts = [];
+            let totalPages = 0;
+            let currentStart = 1;
+            let currentEnd = 1;
+            let isProcessing = false;
+
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+            // ── Storage helpers ──
+            function saveToStorage(fileName, fileSizeBytes, pages) {
+                try {
+                    const data = {
+                        fileName: fileName,
+                        fileSize: fileSizeBytes,
+                        pageTexts: pages,
+                        totalPages: pages.length,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                    cachedBadge.classList.add('visible');
+                } catch (e) {
+                    console.warn('Could not save to localStorage', e);
+                }
+            }
+
+            function loadFromStorage() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (!raw) return null;
+                    const data = JSON.parse(raw);
+                    if (data && data.pageTexts && data.pageTexts.length > 0) {
+                        return data;
+                    }
+                    return null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function clearStorage() {
+                localStorage.removeItem(STORAGE_KEY);
+                cachedBadge.classList.remove('visible');
+            }
+
+            // ── Helpers ──
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+
+            function showError(msg) {
+                errorMsg.textContent = msg;
+                errorMsg.classList.add('visible');
+                setTimeout(() => errorMsg.classList.remove('visible'), 8000);
+            }
+
+            function clearError() {
+                errorMsg.classList.remove('visible');
+                errorMsg.textContent = '';
+            }
+
+            // ── Display the merged range ──
+            function displayRange(start, end) {
+                if (!pageTexts.length || start < 1 || end > totalPages || start > end) {
+                    showError(`Please enter a valid range between 1 and ${totalPages}.`);
+                    return;
+                }
+
+                currentStart = start;
+                currentEnd = end;
+
+                // Build combined content
+                const container = document.createElement('div');
+                container.className = 'fade-in';
+
+                // Range label
+                const label = document.createElement('div');
+                label.className = 'range-label';
+                label.textContent = `Pages ${start} – ${end}  (${end - start + 1} pages)`;
+                container.appendChild(label);
+
+                // For each page in range, add heading + text
+                for (let i = start; i <= end; i++) {
+                    const idx = i - 1;
+                    const text = pageTexts[idx] || '';
+
+                    const heading = document.createElement('div');
+                    heading.className = 'page-heading';
+                    heading.textContent = `— Page ${i} —`;
+                    container.appendChild(heading);
+
+                    const textP = document.createElement('p');
+                    textP.className = 'page-text';
+                    if (text.trim() === '') {
+                        textP.textContent = '(empty page)';
+                        textP.style.color = '#94a3b8';
+                        textP.style.fontStyle = 'italic';
+                    } else {
+                        textP.textContent = text;
+                    }
+                    container.appendChild(textP);
+                }
+
+                // Swap
+                pageContent.innerHTML = '';
+                pageContent.appendChild(container);
+
+                // Update indicator
+                rangeIndicator.textContent = `Pages ${start}–${end}`;
+
+                // Update URL hash
+                try {
+                    history.pushState(null, '', '#range=' + start + '-' + end);
+                } catch (e) {
+                    window.location.hash = 'range=' + start + '-' + end;
+                }
+
+                // Scroll to top
+                pageContent.scrollTop = 0;
+                clearError();
+            }
+
+            // ── Apply range from inputs ──
+            function applyRange() {
+                const startVal = parseInt(startInput.value, 10);
+                const endVal = parseInt(endInput.value, 10);
+                if (isNaN(startVal) || isNaN(endVal) || startVal < 1 || endVal > totalPages || startVal > endVal) {
+                    showError(`Enter a valid range: 1 – ${totalPages}, start ≤ end.`);
+                    return;
+                }
+                displayRange(startVal, endVal);
+            }
+
+            // ── Reset UI ──
+            function resetReaderUI() {
+                pageTexts = [];
+                totalPages = 0;
+                currentStart = 1;
+                currentEnd = 1;
+                readerWrap.classList.remove('visible');
+                pageContent.innerHTML = `
+                    <div class="reader-empty">
+                        <span class="big-icon">📖</span>
+                        <p>Upload a PDF, then set a range and click Apply.</p>
+                    </div>
+                `;
+                rangeIndicator.textContent = 'Pages 1–1';
+                startInput.value = 1;
+                endInput.value = 1;
+                // Clear hash
+                if (history.pushState) {
+                    history.pushState(null, '', window.location.pathname);
+                }
+            }
+
+            // ── Load from cache ──
+            function loadFromCache() {
+                const data = loadFromStorage();
+                if (!data) return false;
+                pageTexts = data.pageTexts;
+                totalPages = data.totalPages;
+                fileName.textContent = data.fileName;
+                fileSize.textContent = '📦 ' + formatFileSize(data.fileSize);
+                pageCount.textContent = '📄 ' + totalPages + ' pages';
+                fileInfo.classList.add('visible');
+                readerWrap.classList.add('visible');
+
+                // Parse range from hash if present
+                let startPage = 1,
+                    endPage = totalPages;
+                const hash = window.location.hash;
+                if (hash && hash.startsWith('#range=')) {
+                    const range = hash.replace('#range=', '');
+                    const parts = range.split('-');
+                    if (parts.length === 2) {
+                        const s = parseInt(parts[0], 10);
+                        const e = parseInt(parts[1], 10);
+                        if (!isNaN(s) && !isNaN(e) && s >= 1 && e <= totalPages && s <= e) {
+                            startPage = s;
+                            endPage = e;
+                        }
+                    }
+                }
+                startInput.value = startPage;
+                endInput.value = endPage;
+                displayRange(startPage, endPage);
+                cachedBadge.classList.add('visible');
+                return true;
+            }
+
+            // ── Extraction ──
+            async function extractTextFromPDF(file) {
+                if (isProcessing) return;
+                isProcessing = true;
+                resetReaderUI();
+                clearError();
+
+                fileInfo.classList.add('visible');
+                fileName.textContent = file.name;
+                fileSize.textContent = '📦 ' + formatFileSize(file.size);
+
+                progressWrap.classList.add('visible');
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Loading PDF…';
+                progressPercent.textContent = '0%';
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    const total = pdf.numPages;
+                    pageCount.textContent = '📄 ' + total + ' pages';
+
+                    if (total === 0) throw new Error('PDF has no pages.');
+
+                    const extracted = [];
+                    for (let i = 1; i <= total; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        const pageText = content.items.map(item => item.str).join(' ');
+                        const trimmed = pageText.replace(/\s+/g, ' ').trim();
+                        extracted.push(trimmed);
+
+                        const pct = Math.round((i / total) * 100);
+                        progressFill.style.width = pct + '%';
+                        progressPercent.textContent = pct + '%';
+                        progressText.textContent = `Page ${i} of ${total}`;
+                        await new Promise(r => requestAnimationFrame(r));
+                    }
+
+                    pageTexts = extracted;
+                    totalPages = total;
+                    saveToStorage(file.name, file.size, pageTexts);
+
+                    readerWrap.classList.add('visible');
+                    // Set initial range: all pages
+                    startInput.value = 1;
+                    endInput.value = total;
+                    displayRange(1, total);
+
+                    progressFill.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    progressText.textContent = `✓ Extracted ${totalPages} pages`;
+                    setTimeout(() => progressWrap.classList.remove('visible'), 1200);
+
+                } catch (err) {
+                    console.error(err);
+                    showError('❌ ' + (err.message || 'Extraction failed.'));
+                    resetReaderUI();
+                } finally {
+                    isProcessing = false;
+                }
+            }
+
+            // ── File handler ──
+            function handleFile(file) {
+                if (!file || file.type !== 'application/pdf') {
+                    showError('Please select a valid PDF.');
+                    return;
+                }
+                if (isProcessing) {
+                    showError('Already processing. Please wait.');
+                    return;
+                }
+                clearStorage();
+                extractTextFromPDF(file);
+            }
+
+            // ── Remove file ──
+            function removeFile() {
+                if (isProcessing) {
+                    showError('Please wait.');
+                    return;
+                }
+                clearStorage();
+                fileInput.value = '';
+                fileInfo.classList.remove('visible');
+                progressWrap.classList.remove('visible');
+                resetReaderUI();
+                clearError();
+                cachedBadge.classList.remove('visible');
+            }
+
+            // ── Event listeners ──
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files.length > 0) {
+                    handleFile(this.files[0]);
+                }
+                this.value = '';
+            });
+
+            uploadZone.addEventListener('dragover', (e) => { e.preventDefault();
+                uploadZone.classList.add('dragover'); });
+            uploadZone.addEventListener('dragleave', () => { uploadZone.classList.remove('dragover'); });
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+            });
+
+            removeFileBtn.addEventListener('click', removeFile);
+
+            applyRangeBtn.addEventListener('click', applyRange);
+            startInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyRange(); });
+            endInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyRange(); });
+
+            // ── Init: try loading from cache ──
+            const loaded = loadFromCache();
+            if (!loaded) {
+                resetReaderUI();
+                console.log('📖 No cached PDF. Upload a file.');
+            } else {
+                console.log('📖 Loaded from cache. Hash:', window.location.hash);
+            }
+        })();
+    </script>
+
+</body>
+</html>
