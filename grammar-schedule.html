@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Structure Practice Scheduler</title>
+<style>
+  *{box-sizing:border-box;}
+  :root{
+    --bg:#f5f6f8; --card:#fff; --ink:#16181d; --muted:#6b7280; --line:#e4e6eb;
+    --accent:#3b6ef6; --accent-soft:#e9efff;
+    --review:#8b5cf6; --review-soft:#f1ecfe;
+    --ok:#0f9d70; --ok-soft:#e5f7f0;
+    --warn:#c2410c; --warn-soft:#fdeee4;
+    --r:12px;
+  }
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink); padding:24px 16px 72px;
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1020px;margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+  h1{font-size:20px;margin:0;font-weight:650;letter-spacing:-.01em;}
+  h2{font-size:14px;margin:0 0 12px;font-weight:650;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);}
+  .top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;}
+  .sub{color:var(--muted);font-size:13px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .btn{
+    font:inherit;font-size:13px;padding:7px 12px;border-radius:9px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);cursor:pointer;transition:.12s;
+  }
+  .btn:hover{background:#f0f1f4;}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn.primary:hover{filter:brightness(1.06);}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted);}
+  .btn.ghost:hover{background:#eceef2;color:var(--ink);}
+  .btn.danger{color:#b91c1c;}
+  .btn.danger:hover{background:#fee2e2;}
+  label{display:block;font-size:13px;font-weight:550;color:#374151;}
+  input,textarea{
+    width:100%;margin-top:5px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+    font:inherit;font-size:14px;background:#fff;color:var(--ink);
+  }
+  input:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent);}
+  textarea{resize:vertical;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid2b{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;}
+  @media(max-width:640px){.grid2,.grid2b{grid-template-columns:1fr;}}
+
+  /* events */
+  .event{display:flex;gap:11px;padding:11px 0;border-top:1px solid var(--line);}
+  .event:first-child{border-top:0;padding-top:2px;}
+  .check{
+    flex:0 0 auto;width:22px;height:22px;margin-top:2px;border-radius:50%;
+    border:1.5px solid #cbd2dc;background:#fff;cursor:pointer;color:#fff;
+    font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;transition:.12s;
+  }
+  .check:hover{border-color:var(--ok);}
+  .check.on{background:var(--ok);border-color:var(--ok);}
+  .event-body{flex:1;min-width:0;}
+  .event-title{font-weight:600;font-size:14.5px;}
+  .event.done .event-title{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px;}
+  .event-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+  .tag{font-size:11px;font-weight:650;padding:2px 7px;border-radius:20px;letter-spacing:.02em;}
+  .tag.daily{background:var(--accent-soft);color:#1e4fd8;}
+  .tag.review{background:var(--review-soft);color:#6d28d9;}
+  code{
+    font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:#f1f2f5;
+    padding:2px 6px;border-radius:6px;color:#374151;
+  }
+  ul.triggers{margin:7px 0 0;padding-left:18px;color:var(--muted);font-size:13px;}
+  ul.triggers li{margin:1px 0;}
+  .empty{color:var(--muted);font-size:13.5px;padding:6px 0;}
+
+  /* calendar */
+  .cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .cal-title{font-weight:650;font-size:15px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .dow{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:center;padding-bottom:4px;font-weight:650;}
+  .day{
+    min-height:86px;border:1px solid var(--line);border-radius:9px;padding:5px 6px;
+    background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:3px;transition:.12s;
+    text-align:left;font:inherit;color:inherit;overflow:hidden;
+  }
+  .day:hover{border-color:#b9c2d0;background:#fafbfd;}
+  .day.out{background:#fafbfc;opacity:.5;}
+  .day.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+  .day.sel{border-color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink);}
+  .daynum{font-size:12px;font-weight:650;color:#4b5563;}
+  .day.today .daynum{color:var(--accent);}
+  .chip{
+    font-size:10.5px;line-height:1.25;padding:2px 5px;border-radius:5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .chip.daily{background:var(--accent-soft);color:#1e4fd8;}
+  .chip.review{background:var(--review-soft);color:#6d28d9;}
+  .chip.done{opacity:.45;text-decoration:line-through;}
+  .more{font-size:10.5px;color:var(--muted);}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted);}
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .dot{width:9px;height:9px;border-radius:3px;display:inline-block;}
+
+  /* structure list */
+  .slist{display:flex;flex-direction:column;gap:10px;}
+  .sitem{border:1px solid var(--line);border-radius:11px;padding:13px 15px;background:#fff;}
+  .sitem-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;}
+  .sitem-name{font-weight:650;font-size:15px;}
+  .sitem-sub{font-size:12.5px;color:var(--muted);margin-top:5px;display:flex;gap:10px;flex-wrap:wrap;}
+  .bar{height:5px;background:#eceef2;border-radius:4px;margin-top:10px;overflow:hidden;}
+  .bar > i{display:block;height:100%;background:var(--ok);border-radius:4px;}
+  .badge{background:var(--warn-soft);color:var(--warn);font-size:11px;font-weight:650;padding:2px 7px;border-radius:20px;}
+  .badge.ok{background:var(--ok-soft);color:var(--ok);}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <h1>Structure Practice Scheduler</h1>
+      <div class="sub" id="todayLine"></div>
+    </div>
+    <div class="row">
+      <button class="btn" id="exportBtn">Export</button>
+      <button class="btn" id="importBtn">Import</button>
+      <input type="file" id="importFile" accept="application/json" class="hidden" />
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Today</h2>
+    <div id="todayList"></div>
+    <div id="overdueWrap" class="hidden">
+      <h2 style="margin-top:18px;color:var(--warn)">Missed — last 14 days</h2>
+      <div id="overdueList"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cal-head">
+      <div class="cal-title" id="calTitle"></div>
+      <div class="row">
+        <button class="btn" id="prevMonth">←</button>
+        <button class="btn" id="thisMonth">Today</button>
+        <button class="btn" id="nextMonth">→</button>
+      </div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="legend">
+      <span><i class="dot" style="background:#3b6ef6"></i> Daily block (days 1–7)</span>
+      <span><i class="dot" style="background:#8b5cf6"></i> Spaced review</span>
+      <span><i class="dot" style="background:#0f9d70"></i> Done</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 id="dayDetailTitle">Selected day</h2>
+    <div id="dayDetail"></div>
+  </div>
+
+  <div class="card">
+    <h2 id="formTitle">Add a structure</h2>
+    <form id="structForm">
+      <div class="grid2">
+        <label>Name
+          <input id="f-name" required placeholder="Causative passive" />
+        </label>
+        <label>Structure / formula
+          <input id="f-form" placeholder="have/get sth done" />
+        </label>
+      </div>
+      <label style="margin-top:12px">Contexts / triggers — one per line
+        <textarea id="f-triggers" rows="3" placeholder="talk about paid services done by sb else&#10;talk about sth stolen"></textarea>
+      </label>
+      <div class="grid2b" style="margin-top:12px">
+        <label>Start date (day 1 of the 7-day block)
+          <input type="date" id="f-start" />
+        </label>
+        <div class="row">
+          <button type="submit" class="btn primary" id="submitBtn">Add structure</button>
+          <button type="button" class="btn hidden" id="cancelEdit">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>My structures <span id="countLabel" class="sub"></span></h2>
+    <div class="slist" id="structList"></div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   SCHEDULE CONFIG — change these to alter the spacing
+   Offsets are in DAYS from the start date.
+   ============================================================ */
+const DAILY_DAYS = 7;                                   // days 0..6 = daily practice
+const REVIEW_OFFSETS = [9, 16, 37, 97, 217, 397, 667];  // +3d, +1w, +3w, +2mo, +4mo, +6mo, +9mo
+const REVIEW_LABELS  = ['Review 1 · +3d','Review 2 · +1w','Review 3 · +3w',
+                        'Review 4 · +2mo','Review 5 · +4mo','Review 6 · +6mo',
+                        'Maintenance · +9mo'];
+/* ============================================================ */
+
+const KEY = 'structure-scheduler-v1';
+let state = { structures: [] };
+let editingId = null;
+let selectedDate = null;
+const today = new Date();
+let viewYear = today.getFullYear();
+let viewMonth = today.getMonth();
+
+/* ---------- date helpers (local, timezone-safe) ---------- */
+function ymd(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function parseYmd(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function addDays(s, n){ const d = parseYmd(s); d.setDate(d.getDate()+n); return ymd(d); }
+function pretty(s){
+  return parseYmd(s).toLocaleDateString(undefined,{weekday:'short', day:'numeric', month:'short', year:'numeric'});
+}
+function esc(str){
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+
+/* ---------- persistence ---------- */
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){ const p = JSON.parse(raw); if(p && Array.isArray(p.structures)) state = p; }
+  }catch(e){ console.warn('load failed', e); }
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ alert('Could not save to localStorage: ' + e.message); }
+}
+
+/* ---------- schedule ---------- */
+function buildSchedule(s){
+  const out = [];
+  for(let i=0;i<DAILY_DAYS;i++){
+    out.push({ date: addDays(s.startDate, i), kind:'daily', label:'Daily ' + (i+1) + '/' + DAILY_DAYS });
+  }
+  REVIEW_OFFSETS.forEach((off,i)=>{
+    out.push({ date: addDays(s.startDate, off), kind:'review', label: REVIEW_LABELS[i] || ('Review ' + (i+1)) });
+  });
+  return out;
+}
+function totalSessions(){ return DAILY_DAYS + REVIEW_OFFSETS.length; }
+
+function eventsByDate(){
+  const map = {};
+  state.structures.forEach(s=>{
+    buildSchedule(s).forEach(ev=>{
+      (map[ev.date] = map[ev.date] || []).push({ s, ev, date: ev.date });
+    });
+  });
+  return map;
+}
+function isDone(s, date){ return !!(s.done && s.done[date]); }
+function doneCount(s){ return Object.keys(s.done || {}).length; }
+function nextEvent(s){
+  const t = ymd(new Date());
+  return buildSchedule(s).filter(e => e.date >= t && !isDone(s, e.date))[0] || null;
+}
+
+/* ---------- rendering ---------- */
+function eventRowHTML(item){
+  const { s, ev, date } = item;
+  const done = isDone(s, date);
+  return `
+    <div class="event ${done ? 'done' : ''}">
+      <button class="check ${done ? 'on' : ''}" data-action="toggle"
+              data-id="${s.id}" data-date="${date}" title="Mark as done">${done ? '✓' : ''}</button>
+      <div class="event-body">
+        <div class="event-title">${esc(s.name)}</div>
+        <div class="event-meta">
+          <span class="tag ${ev.kind}">${esc(ev.label)}</span>
+          ${s.form ? `<code>${esc(s.form)}</code>` : ''}
+        </div>
+        ${(s.triggers && s.triggers.length)
+          ? `<ul class="triggers">${s.triggers.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`
+          : ''}
+      </div>
+    </div>`;
+}
+
+function renderToday(){
+  const t = ymd(new Date());
+  document.getElementById('todayLine').textContent = pretty(t);
+
+  const map = eventsByDate();
+  const list = document.getElementById('todayList');
+  const items = map[t] || [];
+
+  if(!items.length){
+    list.innerHTML = state.structures.length
+      ? '<div class="empty">Nothing scheduled for today. Enjoy the day off — or open the calendar to review something early.</div>'
+      : '<div class="empty">No structures yet. Add one below to generate your schedule.</div>';
+  }else{
+    list.innerHTML = items.map(eventRowHTML).join('');
+  }
+
+  // overdue
+  const overdue = [];
+  for(let i=1;i<=14;i++){
+    const d = addDays(t, -i);
+    (map[d] || []).forEach(it => { if(!isDone(it.s, d)) overdue.push({ ...it, date: d }); });
+  }
+  const ow = document.getElementById('overdueWrap');
+  if(overdue.length){
+    ow.classList.remove('hidden');
+    document.getElementById('overdueList').innerHTML = overdue
+      .sort((a,b)=> a.date.localeCompare(b.date))
+      .map(it => eventRowHTML(it).replace('<div class="event-meta">',
+        `<div class="event-meta"><span class="tag" style="background:#fdeee4;color:#c2410c">${esc(pretty(it.date))}</span>`))
+      .join('');
+  }else{
+    ow.classList.add('hidden');
+  }
+}
+
+function renderCalendar(){
+  const map = eventsByDate();
+  const monthName = new Date(viewYear, viewMonth, 1)
+    .toLocaleDateString(undefined,{month:'long', year:'numeric'});
+  document.getElementById('calTitle').textContent = monthName;
+
+  const grid = document.getElementById('calGrid');
+  let html = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    .map(d => `<div class="dow">${d}</div>`).join('');
+
+  const first = new Date(viewYear, viewMonth, 1);
+  const offset = (first.getDay() + 6) % 7; // Monday-first
+  const start = new Date(viewYear, viewMonth, 1 - offset);
+  const todayStr = ymd(new Date());
+
+  for(let i=0;i<42;i++){
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const ds = ymd(d);
+    const inMonth = d.getMonth() === viewMonth;
+    const events = (map[ds] || []).slice().sort((a,b)=> a.ev.kind === b.ev.kind ? 0 : (a.ev.kind === 'daily' ? -1 : 1));
+    const shown = events.slice(0,3);
+    const rest = events.length - shown.length;
+
+    html += `<button class="day ${inMonth ? '' : 'out'} ${ds === todayStr ? 'today' : ''} ${ds === selectedDate ? 'sel' : ''}"
+              data-action="select" data-date="${ds}">
+      <div class="daynum">${d.getDate()}</div>
+      ${shown.map(it => `<span class="chip ${it.ev.kind} ${isDone(it.s, ds) ? 'done' : ''}">${esc(it.s.name)}</span>`).join('')}
+      ${rest > 0 ? `<span class="more">+${rest} more</span>` : ''}
+    </button>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderDayDetail(){
+  const title = document.getElementById('dayDetailTitle');
+  const box = document.getElementById('dayDetail');
+  if(!selectedDate){
+    title.textContent = 'Selected day';
+    box.innerHTML = '<div class="empty">Click a day in the calendar to see what to practice.</div>';
+    return;
+  }
+  title.textContent = pretty(selectedDate);
+  const map = eventsByDate();
+  const items = map[selectedDate] || [];
+  box.innerHTML = items.length
+    ? items.map(eventRowHTML).join('')
+    : '<div class="empty">Nothing scheduled for this day.</div>';
+}
+
+function renderList(){
+  const box = document.getElementById('structList');
+  document.getElementById('countLabel').textContent =
+    state.structures.length ? '(' + state.structures.length + ')' : '';
+
+  if(!state.structures.length){
+    box.innerHTML = '<div class="empty">Nothing here yet.</div>';
+    return;
+  }
+
+  box.innerHTML = state.structures.map(s => {
+    const total = totalSessions();
+    const done = Math.min(doneCount(s), total);
+    const pct = Math.round(done / total * 100);
+    const ne = nextEvent(s);
+    return `
+      <div class="sitem">
+        <div class="sitem-top">
+          <div>
+            <div class="sitem-name">${esc(s.name)}</div>
+            <div class="sitem-sub">
+              ${s.form ? `<code>${esc(s.form)}</code>` : ''}
+              <span>Started ${esc(pretty(s.startDate))}</span>
+            </div>
+            ${(s.triggers && s.triggers.length)
+              ? `<ul class="triggers">${s.triggers.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`
+              : ''}
+          </div>
+          <div class="row" style="flex:0 0 auto">
+            <button class="btn ghost" data-action="edit" data-id="${s.id}">Edit</button>
+            <button class="btn ghost danger" data-action="delete" data-id="${s.id}">Delete</button>
+          </div>
+        </div>
+        <div class="sitem-sub" style="margin-top:9px">
+          <span class="badge ${ne ? '' : 'ok'}">${ne ? 'Next: ' + esc(pretty(ne.date)) + ' — ' + esc(ne.label) : 'Schedule complete'}</span>
+          <span>${done}/${total} sessions logged</span>
+        </div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+      </div>`;
+  }).join('');
+}
+
+function renderAll(){
+  renderToday();
+  renderCalendar();
+  renderDayDetail();
+  renderList();
+}
+
+/* ---------- actions ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.dataset.action;
+  const id = el.dataset.id;
+  const date = el.dataset.date;
+
+  if(action === 'toggle'){
+    const s = state.structures.find(x => x.id === id);
+    if(!s) return;
+    s.done = s.done || {};
+    if(s.done[date]) delete s.done[date]; else s.done[date] = true;
+    save(); renderAll();
+  }
+  else if(action === 'select'){
+    selectedDate = date;
+    renderCalendar(); renderDayDetail();
+  }
+  else if(action === 'delete'){
+    const s = state.structures.find(x => x.id === id);
+    if(s && confirm('Delete "' + s.name + '" and its whole schedule?')){
+      state.structures = state.structures.filter(x => x.id !== id);
+      save(); renderAll();
+    }
+  }
+  else if(action === 'edit'){
+    const s = state.structures.find(x => x.id === id);
+    if(!s) return;
+    editingId = id;
+    document.getElementById('f-name').value = s.name;
+    document.getElementById('f-form').value = s.form || '';
+    document.getElementById('f-triggers').value = (s.triggers || []).join('\n');
+    document.getElementById('f-start').value = s.startDate;
+    document.getElementById('formTitle').textContent = 'Edit structure';
+    document.getElementById('submitBtn').textContent = 'Save changes';
+    document.getElementById('cancelEdit').classList.remove('hidden');
+    document.getElementById('structForm').scrollIntoView({behavior:'smooth', block:'center'});
+  }
+});
+
+document.getElementById('cancelEdit').addEventListener('click', resetForm);
+
+function resetForm(){
+  editingId = null;
+  document.getElementById('structForm').reset();
+  document.getElementById('f-start').value = ymd(new Date());
+  document.getElementById('formTitle').textContent = 'Add a structure';
+  document.getElementById('submitBtn').textContent = 'Add structure';
+  document.getElementById('cancelEdit').classList.add('hidden');
+}
+
+document.getElementById('structForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('f-name').value.trim();
+  if(!name) return;
+  const form = document.getElementById('f-form').value.trim();
+  const triggers = document.getElementById('f-triggers').value
+    .split('\n').map(x => x.trim()).filter(Boolean);
+  const startDate = document.getElementById('f-start').value || ymd(new Date());
+
+  if(editingId){
+    const s = state.structures.find(x => x.id === editingId);
+    if(s){ s.name = name; s.form = form; s.triggers = triggers; s.startDate = startDate; }
+  }else{
+    state.structures.push({ id: uid(), name, form, triggers, startDate, done: {} });
+  }
+  save();
+  resetForm();
+  renderAll();
+});
+
+document.getElementById('prevMonth').addEventListener('click', () => {
+  viewMonth--; if(viewMonth < 0){ viewMonth = 11; viewYear--; }
+  renderCalendar();
+});
+document.getElementById('nextMonth').addEventListener('click', () => {
+  viewMonth++; if(viewMonth > 11){ viewMonth = 0; viewYear++; }
+  renderCalendar();
+});
+document.getElementById('thisMonth').addEventListener('click', () => {
+  const n = new Date(); viewYear = n.getFullYear(); viewMonth = n.getMonth();
+  renderCalendar();
+});
+
+/* ---------- import / export ---------- */
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'structure-scheduler-' + ymd(new Date()) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!parsed || !Array.isArray(parsed.structures)) throw new Error('Bad file format');
+      if(confirm('Import ' + parsed.structures.length + ' structure(s)? This replaces your current data.')){
+        state = parsed;
+        save(); renderAll();
+      }
+    }catch(err){ alert('Import failed: ' + err.message); }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+/* ---------- init ---------- */
+load();
+selectedDate = ymd(new Date());
+document.getElementById('f-start').value = ymd(new Date());
+renderAll();
+</script>
+</body>
+</html>
