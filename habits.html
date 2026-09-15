@@ -102,6 +102,19 @@
   }
   .chip:active { opacity: .55; }
   .chip.danger { color: var(--danger); }
+    .day-start-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 26px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%230a84ff' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    font-size: 12px;
+  }
+  .day-start-select option {
+    background: var(--card);
+    color: var(--text);
+  }
 
   /* ---------- habit list ---------- */
   .habits { list-style: none; margin: 0; padding: 0; }
@@ -617,36 +630,31 @@ function reorderControls(section, habit) {
       btn.classList.toggle('active', btn.dataset.view === view);
     }
 
-    // day-start chip in the topbar
+        // day-start dropdown in the topbar
     dayStartSlot.innerHTML = '';
     const h = dayStartHour();
-    const hLabel = h === 0 ? '12 AM'
-      : h < 12 ? h + ' AM'
-      : h === 12 ? '12 PM'
-      : (h - 12) + ' PM';
-    const dayStartBtn = el('button', {
-      class: 'chip',
-      text: 'New day at ' + hLabel,
-      title: 'Tap to change the hour when a new day starts'
+    const select = document.createElement('select');
+    select.className = 'chip day-start-select';
+    select.title = 'When a new day starts';
+    for (let i = 0; i < 24; i++) {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      const label = i === 0 ? '12 AM'
+        : i < 12 ? i + ' AM'
+        : i === 12 ? '12 PM'
+        : (i - 12) + ' PM';
+      opt.textContent = 'New day at ' + label;
+      select.append(opt);
+    }
+    select.value = String(h);
+    select.addEventListener('change', () => {
+      data.settings = data.settings || {};
+      data.settings.dayStartHour = parseInt(select.value, 10);
+      currentDay = activeDateKey();
+      save();
+      render();
     });
-    dayStartBtn.addEventListener('click', () => {
-      inlineEdit(dayStartBtn, {
-        value: h,
-        type: 'number',
-        inputMode: 'numeric',
-        placeholder: '0–23',
-        width: '3ch',
-        onCommit: (raw) => {
-          let n = parseInt(String(raw).trim(), 10);
-          if (!Number.isFinite(n) || n < 0) n = 0;
-          if (n > 23) n = 23;
-          data.settings = data.settings || {};
-          data.settings.dayStartHour = n;
-          currentDay = activeDateKey();
-        }
-      });
-    });
-    dayStartSlot.append(dayStartBtn);
+    dayStartSlot.append(select);
 
     // main content
     app.innerHTML = '';
