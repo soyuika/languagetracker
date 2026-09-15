@@ -135,7 +135,7 @@
   .habit.counter { padding: 11px 0 12px; }
   .habit-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
   .habit-head .name { font-size: 15px; font-weight: 500; }
-  .habit.counter.is-done .name { color: var(--done); }
+  .habit.counter:has(.counter-row.is-done) .name { color: var(--done); }
 
   .counter-row { display: flex; align-items: stretch; gap: 8px; }
 
@@ -178,7 +178,7 @@
     white-space: nowrap;
   }
   .value-btn.has-value { color: var(--text); }
-  .habit.counter.is-done .value-btn { color: var(--done); }
+  .habit.counter:has(.counter-row.is-done) .value-btn { color: var(--done); }
 
   .meta-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; padding-left: 2px; }
   .meta-chip {
@@ -196,6 +196,9 @@
   }
   .meta-chip:active { background: var(--border); }
   .meta-chip.add { color: var(--accent); border-style: dashed; }
+  .counter-row-repeat { margin-top: 6px; }
+  .counter-row-repeat .step-btn { min-width: 54px; height: 40px; font-size: 15px; }
+  .counter-row-repeat .value-btn { height: 40px; font-size: 15px; }
 
   /* ---------- icons ---------- */
   .icon {
@@ -355,6 +358,17 @@
     if (!isTime && habit.unit) out += ' ' + habit.unit;
     return out;
   }
+
+    function formatCounterValue(type, value, target, unit) {
+    const isTime = type === 'time';
+    const main = isTime ? formatMinutes(value) : String(value);
+    let out = main;
+    if (target != null && target > 0) {
+      out += ' / ' + (isTime ? formatMinutes(target) : target);
+    }
+    if (!isTime && unit) out += ' ' + unit;
+    return out;
+  }
   
   function parseDuration(input) {
   const s = String(input).trim().toLowerCase().replace(/\s+/g, '');
@@ -427,28 +441,31 @@
   /* log access                                                          */
   /* ================================================================== */
 
-  function getEntry(key, habitId) {
+    function getEntry(key, habitId, slot) {
     const day = data.logs[key];
-    return day ? day[habitId] : undefined;
+    if (!day) return undefined;
+    return day[slot ? habitId + ':' + slot : habitId];
   }
 
-  function setEntry(key, habitId, value, skipSave) {
+    function setEntry(key, habitId, value, skipSave, slot) {
+    const k = slot ? habitId + ':' + slot : habitId;
     const isEmpty = value === undefined || value === null || value === false || value === 0;
     if (isEmpty) {
       const day = data.logs[key];
       if (day) {
-        delete day[habitId];
+        delete day[k];
         if (Object.keys(day).length === 0) delete data.logs[key];
       }
     } else {
-      (data.logs[key] = data.logs[key] || {})[habitId] = value;
+      (data.logs[key] = data.logs[key] || {})[k] = value;
     }
     if (!skipSave) save();
   }
 
-  function purgeHabitLogs(habitId) {
+    function purgeHabitLogs(habitId) {
     for (const key of Object.keys(data.logs)) {
       delete data.logs[key][habitId];
+      delete data.logs[key][habitId + ':r'];
       if (Object.keys(data.logs[key]).length === 0) delete data.logs[key];
     }
   }
@@ -511,11 +528,11 @@
   /* actions                                                             */
   /* ================================================================== */
 
-  function adjust(key, habit, delta, skipSave) {
-    const raw = getEntry(key, habit.id);
+    function adjust(key, habit, delta, skipSave, slot) {
+    const raw = getEntry(key, habit.id, slot);
     const current = typeof raw === 'number' ? raw : 0;
     const next = Math.max(0, current + delta);
-    setEntry(key, habit.id, next, skipSave);
+    setEntry(key, habit.id, next, skipSave, slot);
     return next;
   }
 
@@ -765,7 +782,7 @@ function reorderControls(section, habit) {
 
   /* ---------- counter / time habit ---------- */
 
-  function renderCounterHabit(section, habit, key) {
+    function renderCounterHabit(section, habit, key) {
     const isTime = habit.type === 'time';
     const li = el('li', { class: 'habit counter' });
     li.dataset.habitId = habit.id;
@@ -777,104 +794,125 @@ function reorderControls(section, habit) {
       inlineEdit(nameEl, {
         value: habit.name,
         className: 'name-input',
-        width: Math.max(8, (habit.name || '').length + 2) + 'ch',
         onCommit: (v) => commitHabitName(section, habit, v)
       });
     });
 
-    /* --- value button --- */
+    li.append(
+      el('div', { class: 'habit-head' },
+        nameEl,
+        el('div', { class: 'habit-head-actions' },
+          ...reorderControls(section, habit),
+          el('button', { class: 'icon danger', text: '×', title: 'Delete', onClick: () => deleteHabit(section, habit) })
+        )
+      )
+    );
+
+    /* --- main counter --- */
+    li.append(buildCounterRow(section, habit, key, null, {
+      target: habit.target,
+      unit: habit.unit,
+      step: habit.step || (isTime ? 5 : 1)
+    }));
+
+    /* --- repeat counter (count habits only) --- */
+    if (!isTime && habit.repeatTarget != null) {
+      const repeatRow = buildCounterRow(section, habit, key, 'r', {
+        target: habit.repeatTarget,
+        unit: habit.repeatUnit || 'times',
+        step: habit.repeatStep || 1
+      });
+      repeatRow.classList.add('counter-row-repeat');
+      li.append(repeatRow);
+    }
+
+    /* --- meta chips --- */
+    li.append(buildMetaRow(section, habit, key, isTime));
+
+    return li;
+  }
+
+  function buildCounterRow(section, habit, key, slot, opts) {
+    const row = el('div', { class: 'counter-row' });
+    const isTime = habit.type === 'time';
     const valueBtn = el('button', { class: 'value-btn', title: 'Tap to type an exact amount' });
 
     function currentNumber() {
-      const raw = getEntry(key, habit.id);
+      const raw = getEntry(key, habit.id, slot);
       return typeof raw === 'number' ? raw : 0;
     }
-
     function refreshValue() {
       const n = currentNumber();
-      valueBtn.textContent = formatValue(habit, n);
+      valueBtn.textContent = formatCounterValue(habit.type, n, opts.target, opts.unit);
       valueBtn.classList.toggle('has-value', n > 0);
-      li.classList.toggle('is-done', habit.target ? n >= habit.target : n > 0);
+      row.classList.toggle('is-done', opts.target ? n >= opts.target : n > 0);
     }
     refreshValue();
 
     valueBtn.addEventListener('click', () => {
-  const current = currentNumber();
-  if (isTime) {
-    inlineEdit(valueBtn, {
-      value: current ? formatMinutes(current) : '',
-      placeholder: 'e.g. 1h 30m',
-      className: 'value-input',
-      onCommit: (raw) => {
-        const mins = parseDuration(raw);
-        setEntry(key, habit.id, Math.max(0, mins || 0));
+      const current = currentNumber();
+      if (isTime) {
+        inlineEdit(valueBtn, {
+          value: current ? formatMinutes(current) : '',
+          placeholder: 'e.g. 1h 30m',
+          className: 'value-input',
+          onCommit: (raw) => {
+            const mins = parseDuration(raw);
+            setEntry(key, habit.id, Math.max(0, mins || 0), false, slot);
+          }
+        });
+      } else {
+        inlineEdit(valueBtn, {
+          value: current,
+          type: 'number',
+          inputMode: 'numeric',
+          className: 'value-input',
+          onCommit: (raw) => {
+            const n = Math.max(0, Math.round(Number(String(raw).trim()) || 0));
+            setEntry(key, habit.id, n, false, slot);
+          }
+        });
       }
     });
-  } else {
-    inlineEdit(valueBtn, {
-      value: current,
-      type: 'number',
-      inputMode: 'numeric',
-      className: 'value-input',
-      onCommit: (raw) => {
-        const n = Math.max(0, Math.round(Number(String(raw).trim()) || 0));
-        setEntry(key, habit.id, n);
-      }
-    });
-  }
-});
 
-    /* --- step buttons (with press-and-hold repeat) --- */
-    const step = habit.step || (isTime ? 5 : 1);
+    const step = opts.step;
     const stepLabel = isTime ? step + 'm' : String(step);
 
     function makeStepButton(label, delta) {
       const btn = el('button', { class: 'step-btn', text: label, type: 'button' });
-      let holdTimer = null;
-      let repeatTimer = null;
-      let didRepeat = false;
-
-      const apply = (skipSave) => {
-        adjust(key, habit, delta, skipSave);
-        refreshValue();
-      };
-
-      const stopTimers = () => {
-        clearTimeout(holdTimer);
-        clearInterval(repeatTimer);
-        holdTimer = repeatTimer = null;
-      };
-
+      let holdTimer = null, repeatTimer = null, didRepeat = false;
+      const apply = (skipSave) => { adjust(key, habit, delta, skipSave, slot); refreshValue(); };
+      const stopTimers = () => { clearTimeout(holdTimer); clearInterval(repeatTimer); holdTimer = repeatTimer = null; };
       btn.addEventListener('pointerdown', (e) => {
         if (e.button != null && e.button !== 0) return;
         didRepeat = false;
         holdTimer = setTimeout(() => {
           didRepeat = true;
-          apply(true);                       // first repeat immediately
+          apply(true);
           repeatTimer = setInterval(() => apply(true), 90);
         }, 420);
       });
-
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt =>
         btn.addEventListener(evt, stopTimers)
       );
-
       btn.addEventListener('click', () => {
         stopTimers();
-        if (didRepeat) {
-          didRepeat = false;
-          save();
-          render();                          // sync progress bars after a hold
-          return;
-        }
+        if (didRepeat) { didRepeat = false; save(); render(); return; }
         apply(false);
         render();
       });
-
       return btn;
     }
 
-    /* --- meta chips --- */
+    row.append(
+      makeStepButton('−' + stepLabel, -step),
+      el('div', { class: 'value-slot' }, valueBtn),
+      makeStepButton('+' + stepLabel, step)
+    );
+    return row;
+  }
+
+  function buildMetaRow(section, habit, key, isTime) {
     const metaRow = el('div', { class: 'meta-row' });
 
     // goal
@@ -885,41 +923,38 @@ function reorderControls(section, habit) {
     } else {
       goalChip.textContent = '+ goal';
       goalChip.classList.add('add');
-      goalChip.title = 'Set a daily goal';
     }
     goalChip.addEventListener('click', () => {
-  if (isTime) {
-    inlineEdit(goalChip, {
-      value: habit.target != null ? formatMinutes(habit.target) : '',
-      placeholder: 'e.g. 1h 30m',
-      width: '9ch',
-      onCommit: (raw) => {
-        const mins = parseDuration(raw);
-        habit.target = (mins && mins > 0) ? mins : null;
+      if (isTime) {
+        inlineEdit(goalChip, {
+          value: habit.target != null ? formatMinutes(habit.target) : '',
+          placeholder: 'e.g. 1h 30m',
+          width: '9ch',
+          onCommit: (raw) => {
+            const mins = parseDuration(raw);
+            habit.target = (mins && mins > 0) ? mins : null;
+          }
+        });
+      } else {
+        editNumber(goalChip, habit.target, {
+          placeholder: 'none',
+          onCommit: (n) => { habit.target = n; }
+        });
       }
     });
-  } else {
-    editNumber(goalChip, habit.target, {
-      placeholder: 'none',
-      onCommit: (n) => { habit.target = n; }
-    });
-  }
-});
+    metaRow.append(goalChip);
 
     // step
-    const stepChip = el('button', {
-      class: 'meta-chip',
-      text: 'step ' + stepLabel,
-      title: 'Tap to change the increment'
-    });
+    const step = habit.step || (isTime ? 5 : 1);
+    const stepLabel = isTime ? step + 'm' : String(step);
+    const stepChip = el('button', { class: 'meta-chip', text: 'step ' + stepLabel, title: 'Tap to change the increment' });
     stepChip.addEventListener('click', () => {
       editNumber(stepChip, step, {
         placeholder: '1',
         onCommit: (n) => { habit.step = n || (isTime ? 5 : 1); }
       });
     });
-
-    metaRow.append(goalChip, stepChip);
+    metaRow.append(stepChip);
 
     // unit (counters only)
     if (!isTime) {
@@ -937,49 +972,76 @@ function reorderControls(section, habit) {
         });
       });
       metaRow.append(unitChip);
+
+      // repeat counter toggle
+      const repeatChip = el('button', { class: 'meta-chip' });
+      if (habit.repeatTarget != null) {
+        repeatChip.textContent = 'repeat ×' + habit.repeatTarget;
+        repeatChip.title = 'Tap to change the repeat goal';
+      } else {
+        repeatChip.textContent = '+ repeat';
+        repeatChip.classList.add('add');
+        repeatChip.title = 'Add a second counter (e.g. times per day)';
+      }
+      repeatChip.addEventListener('click', () => {
+        inlineEdit(repeatChip, {
+          value: habit.repeatTarget == null ? '' : habit.repeatTarget,
+          type: 'number',
+          inputMode: 'numeric',
+          placeholder: '0 = off',
+          width: '4ch',
+          onCommit: (raw) => {
+            const n = parseInt(String(raw).trim(), 10);
+            if (Number.isFinite(n) && n > 0) {
+              habit.repeatTarget = n;
+              if (!habit.repeatUnit) habit.repeatUnit = 'times';
+              if (!habit.repeatStep) habit.repeatStep = 1;
+            } else {
+              habit.repeatTarget = null;
+              habit.repeatUnit = null;
+              habit.repeatStep = null;
+              for (const k of Object.keys(data.logs)) {
+                delete data.logs[k][habit.id + ':r'];
+                if (Object.keys(data.logs[k]).length === 0) delete data.logs[k];
+              }
+            }
+          }
+        });
+      });
+      metaRow.append(repeatChip);
     }
 
-    li.append(
-  el('div', { class: 'habit-head' },
-    nameEl,
-    el('div', { class: 'habit-head-actions' },
-      ...reorderControls(section, habit),
-      el('button', { class: 'icon danger', text: '×', title: 'Delete', onClick: () => deleteHabit(section, habit) })
-    )
-  ),
-      el('div', { class: 'counter-row' },
-        makeStepButton('−' + stepLabel, -step),
-        el('div', { class: 'value-slot' }, valueBtn),
-        makeStepButton('+' + stepLabel, step)
-      ),
-      metaRow
-    );
-
-    return li;
+    return metaRow;
   }
 
   /* ---------- section progress ---------- */
 
-  function renderProgress(section, key) {
-    const habits = section.habits;
-    let done = 0;
+    function renderProgress(section, key) {
+    let total = 0, done = 0;
 
-    for (const h of habits) {
-      const entry = getEntry(key, h.id);
+    for (const h of section.habits) {
       if (h.type === 'check') {
-        if (entry) done++;
+        total += 1;
+        if (getEntry(key, h.id)) done++;
       } else {
-        const v = typeof entry === 'number' ? entry : 0;
+        total += 1;
+        const v = typeof getEntry(key, h.id) === 'number' ? getEntry(key, h.id) : 0;
         if (h.target ? v >= h.target : v > 0) done++;
+
+        if (h.type === 'count' && h.repeatTarget != null) {
+          total += 1;
+          const rv = typeof getEntry(key, h.id, 'r') === 'number' ? getEntry(key, h.id, 'r') : 0;
+          if (rv >= h.repeatTarget) done++;
+        }
       }
     }
 
-    const pct = habits.length ? Math.round((done / habits.length) * 100) : 0;
+    const pct = total ? Math.round((done / total) * 100) : 0;
     const fill = el('div', { class: 'bar-fill' });
     fill.style.width = pct + '%';
 
     return el('div', { class: 'progress' },
-      el('div', { class: 'progress-text', text: `${done} / ${habits.length} complete` }),
+      el('div', { class: 'progress-text', text: `${done} / ${total} complete` }),
       el('div', { class: 'bar' }, fill)
     );
   }
@@ -996,13 +1058,21 @@ function reorderControls(section, habit) {
 
       for (const section of data.sections) {
         const rows = [];
-        for (const habit of section.habits) {
+                for (const habit of section.habits) {
           const entry = day[habit.id];
-          if (entry === undefined) continue;
-          rows.push(el('li', {},
-            el('span', { class: 'name', text: habit.name || '(untitled)' }),
-            el('span', { class: 'value', text: habit.type === 'check' ? '✓' : formatValue(habit, entry) })
-          ));
+          const repeatEntry = day[habit.id + ':r'];
+          if (entry !== undefined) {
+            rows.push(el('li', {},
+              el('span', { class: 'name', text: habit.name || '(untitled)' }),
+              el('span', { class: 'value', text: habit.type === 'check' ? '✓' : formatValue(habit, entry) })
+            ));
+          }
+          if (repeatEntry !== undefined && habit.repeatTarget != null) {
+            rows.push(el('li', {},
+              el('span', { class: 'name', text: '↳ ' + (habit.name || '(untitled)') + ' (repeat)' }),
+              el('span', { class: 'value', text: formatCounterValue('count', repeatEntry, habit.repeatTarget, habit.repeatUnit) })
+            ));
+          }
         }
         if (rows.length) {
           groups.push(el('div', { class: 'history-group' },
