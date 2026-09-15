@@ -127,6 +127,13 @@
   .habit.newly-added {
     animation: row-flash 1.2s ease-out;
   }
+    @keyframes row-moved-flash {
+    0%   { background: rgba(142, 142, 147, 0.35); }
+    100% { background: transparent; }
+  }
+  .habit.just-moved {
+    animation: row-moved-flash 0.9s ease-out;
+  }
   .empty-row { color: var(--muted); font-size: 13px; padding: 8px 0; list-style: none; }
 
   /* check habit */
@@ -555,6 +562,13 @@
     clearTimeout(justLoggedTimer);
     justLoggedTimer = setTimeout(() => { justLoggedId = null; }, 700);
   }
+    let justMovedId = null;
+  let justMovedTimer = null;
+  function markJustMoved(id) {
+    justMovedId = id;
+    clearTimeout(justMovedTimer);
+    justMovedTimer = setTimeout(() => { justMovedId = null; }, 950);
+  }
 
   /* ================================================================== */
   /* log access                                                          */
@@ -800,7 +814,8 @@
   if (i < 0 || j < 0 || j >= section.habits.length) return;
   const [item] = section.habits.splice(i, 1);
   section.habits.splice(j, 0, item);
-  save();
+  markJustMoved(habit.id);
+   save();
   render();
 }
 
@@ -955,6 +970,7 @@ function reorderControls(section, habit) {
     else if (hasRepeat && count > 0) li.classList.add('partial');
     if (skipped) li.classList.add('skipped');
     if (justLoggedId === habit.id) li.classList.add('just-logged');
+      if (justMovedId === habit.id) li.classList.add('just-moved');
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -1036,6 +1052,7 @@ function reorderControls(section, habit) {
     const skipped = isSkipped(key, habit.id);
     if (skipped) li.classList.add('skipped');
     if (justLoggedId === habit.id) li.classList.add('just-logged');
+    if (justMovedId === habit.id) li.classList.add('just-moved');
 
     function updateDone() {
       li.classList.toggle('is-done', habitIsDone(key, habit));
