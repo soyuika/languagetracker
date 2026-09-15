@@ -167,7 +167,8 @@
     touch-action: manipulation;
   }
   .icon:hover { color: var(--text); }
-  .icon.danger:hover { color: var(--danger); }
+  .habit-head-actions { display: flex; align-items: center; flex: none; }
+.icon[disabled] { opacity: .25; pointer-events: none; }
 
   /* ---------- inline inputs ---------- */
   .inline-input {
@@ -182,7 +183,8 @@
     min-width: 3ch;
     text-align: center;
   }
-  .inline-input.name-input { text-align: left; }
+  .inline-input.name-input { text-align: left; flex: 1; width: auto !important; min-width: 0; }
+  .section-head .name-input { flex: 0 1 auto; width: 12ch !important; }
   .inline-input.value-input { width: 100%; text-align: center; font-weight: 600; }
 
   /* ---------- progress ---------- */
@@ -506,6 +508,32 @@
     save();
     render();
   }
+ function moveHabit(section, habit, direction) {
+  const i = section.habits.findIndex(h => h.id === habit.id);
+  const j = i + direction;
+  if (i < 0 || j < 0 || j >= section.habits.length) return;
+  const [item] = section.habits.splice(i, 1);
+  section.habits.splice(j, 0, item);
+  save();
+  render();
+}
+
+function reorderControls(section, habit) {
+  const i = section.habits.findIndex(h => h.id === habit.id);
+  const last = section.habits.length - 1;
+  return [
+    el('button', {
+      class: 'icon', text: '↑', title: 'Move up',
+      disabled: i <= 0,
+      onClick: () => moveHabit(section, habit, -1)
+    }),
+    el('button', {
+      class: 'icon', text: '↓', title: 'Move down',
+      disabled: i >= last,
+      onClick: () => moveHabit(section, habit, 1)
+    })
+  ];
+} 
 
   function clearAllHistory() {
     if (!confirm('Delete ALL logged history? Your sections and habits stay.')) return;
@@ -618,9 +646,10 @@
     });
 
     li.append(
-      el('label', { class: 'check-label' }, cb, nameEl),
-      el('button', { class: 'icon danger', text: '×', title: 'Delete', onClick: () => deleteHabit(section, habit) })
-    );
+  el('label', { class: 'check-label' }, cb, nameEl),
+  ...reorderControls(section, habit),
+  el('button', { class: 'icon danger', text: '×', title: 'Delete', onClick: () => deleteHabit(section, habit) })
+);
 
     return li;
   }
@@ -777,10 +806,13 @@
     }
 
     li.append(
-      el('div', { class: 'habit-head' },
-        nameEl,
-        el('button', { class: 'icon danger', text: '×', title: 'Delete', onClick: () => deleteHabit(section, habit) })
-      ),
+  el('div', { class: 'habit-head' },
+    nameEl,
+    el('div', { class: 'habit-head-actions' },
+      ...reorderControls(section, habit),
+      el('button', { class: 'icon danger', text: '×', title: 'Delete', onClick: () => deleteHabit(section, habit) })
+    )
+  ),
       el('div', { class: 'counter-row' },
         makeStepButton('−' + stepLabel, -step),
         el('div', { class: 'value-slot' }, valueBtn),
