@@ -954,6 +954,7 @@ function reorderControls(section, habit) {
       valueBtn.classList.toggle('has-value', n > 0);
       if (onChange) onChange();
     }
+      refreshValue();
 
     valueBtn.addEventListener('click', () => {
       const current = currentNumber();
