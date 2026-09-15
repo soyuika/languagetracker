@@ -132,13 +132,22 @@
   .habit.check.done .name { color: var(--muted); text-decoration: line-through; }
 
   /* counter habit */
-  .habit.counter { padding: 11px 0 12px; }
+  .habit.counter { padding: 10px 0 10px; }
   .habit-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
   .habit-head .name { font-size: 15px; font-weight: 500; }
-  .habit.counter:has(.counter-row.is-done) .name { color: var(--done); }
+  .habit.counter.is-done .name { color: var(--done); }
+.habit.skipped { opacity: 0.45; }
+.habit.skipped .name { text-decoration: line-through; }
+.check-count {
+  font-size: 12px; color: var(--muted); margin-left: 8px;
+  font-weight: 500; font-variant-numeric: tabular-nums; flex: none;
+}
+.check-count.done { color: var(--done); }
+.icon.rep-on { color: var(--accent); }
+.icon.skip-on { color: var(--danger); }
 
-  .counter-row { display: flex; align-items: stretch; gap: 8px; }
-
+  .counter-row { display: flex; align-items: stretch; gap: 6px; }
+  
   .step-btn {
     flex: none;
     min-width: 62px;
@@ -178,7 +187,7 @@
     white-space: nowrap;
   }
   .value-btn.has-value { color: var(--text); }
-  .habit.counter:has(.counter-row.is-done) .value-btn { color: var(--done); }
+  .habit.counter.is-done .value-btn { color: var(--done); }
 
   .meta-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; padding-left: 2px; }
   .meta-chip {
@@ -196,9 +205,9 @@
   }
   .meta-chip:active { background: var(--border); }
   .meta-chip.add { color: var(--accent); border-style: dashed; }
-  .counter-row-repeat { margin-top: 6px; }
-  .counter-row-repeat .step-btn { min-width: 54px; height: 40px; font-size: 15px; }
-  .counter-row-repeat .value-btn { height: 40px; font-size: 15px; }
+  .counter-row-repeat { margin-top: 4px; }
+.counter-row-repeat .step-btn { min-width: 46px; height: 32px; font-size: 13px; padding: 0 8px; border-radius: 8px; font-weight: 500; }
+.counter-row-repeat .value-btn { height: 32px; font-size: 13px; }
 
   /* ---------- icons ---------- */
   .icon {
@@ -462,12 +471,61 @@
     if (!skipSave) save();
   }
 
-    function purgeHabitLogs(habitId) {
+      function purgeHabitLogs(habitId) {
     for (const key of Object.keys(data.logs)) {
       delete data.logs[key][habitId];
       delete data.logs[key][habitId + ':r'];
+      delete data.logs[key][habitId + ':skip'];
       if (Object.keys(data.logs[key]).length === 0) delete data.logs[key];
     }
+  }
+
+    function isSkipped(key, habitId) {
+    const day = data.logs[key];
+    return !!(day && day[habitId + ':skip']);
+  }
+
+  function toggleSkip(key, habitId) {
+    if (isSkipped(key, habitId)) {
+      delete data.logs[key][habitId + ':skip'];
+      if (Object.keys(data.logs[key]).length === 0) delete data.logs[key];
+    } else {
+      (data.logs[key] = data.logs[key] || {})[habitId + ':skip'] = true;
+    }
+    save();
+    render();
+  }
+
+  function habitIsDone(key, habit) {
+    if (isSkipped(key, habit.id)) return false;
+
+    if (habit.type === 'check') {
+      const raw = getEntry(key, habit.id);
+      if (habit.repeatTarget != null) {
+        const n = typeof raw === 'number' ? raw : 0;
+        return n >= habit.repeatTarget;
+      }
+      return !!raw;
+    }
+
+    // counter
+    const v = typeof getEntry(key, habit.id) === 'number' ? getEntry(key, habit.id) : 0;
+    const mainDone = habit.target ? v >= habit.target : v > 0;
+    let repeatDone = true;
+    if (habit.type === 'count' && habit.repeatTarget != null) {
+      const rv = typeof getEntry(key, habit.id, 'r') === 'number' ? getEntry(key, habit.id, 'r') : 0;
+      repeatDone = rv >= habit.repeatTarget;
+    }
+    return mainDone && repeatDone;
+  }
+
+  function skipButton(key, habitId, skipped) {
+    return el('button', {
+      class: 'icon' + (skipped ? ' skip-on' : ''),
+      text: skipped ? '↺' : '⊘',
+      title: skipped ? 'Unskip' : 'Skip for today',
+      onClick: () => toggleSkip(key, habitId)
+    });
   }
 
   /* ================================================================== */
@@ -743,18 +801,30 @@ function reorderControls(section, habit) {
 
   /* ---------- check habit ---------- */
 
-  function renderCheckHabit(section, habit, key) {
+    function renderCheckHabit(section, habit, key) {
     const li = el('li', { class: 'habit check' });
     li.dataset.habitId = habit.id;
 
-    const done = !!getEntry(key, habit.id);
+    const skipped = isSkipped(key, habit.id);
+    const hasRepeat = habit.repeatTarget != null;
+    const raw = getEntry(key, habit.id);
+    const count = hasRepeat ? (typeof raw === 'number' ? raw : 0) : (raw ? 1 : 0);
+    const target = hasRepeat ? habit.repeatTarget : 1;
+    const done = hasRepeat ? count >= target : !!raw;
+
     if (done) li.classList.add('done');
+    if (skipped) li.classList.add('skipped');
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.checked = done;
+    cb.disabled = skipped;
     cb.addEventListener('change', () => {
-      setEntry(key, habit.id, cb.checked ? 1 : 0);
+      if (hasRepeat) {
+        setEntry(key, habit.id, count >= target ? 0 : count + 1);
+      } else {
+        setEntry(key, habit.id, cb.checked ? 1 : 0);
+      }
       render();
     });
 
@@ -766,28 +836,67 @@ function reorderControls(section, habit) {
       inlineEdit(nameEl, {
         value: habit.name,
         className: 'name-input',
-        width: Math.max(8, (habit.name || '').length + 2) + 'ch',
         onCommit: (v) => commitHabitName(section, habit, v)
       });
     });
 
+    const label = el('label', { class: 'check-label' }, cb, nameEl);
+    if (hasRepeat) {
+      label.append(el('span', {
+        class: 'check-count' + (done ? ' done' : ''),
+        text: count + '/' + target
+      }));
+    }
+
+    const repeatIcon = el('button', {
+      class: 'icon' + (hasRepeat ? ' rep-on' : ''),
+      text: '⟳',
+      title: hasRepeat ? `Repeat ×${habit.repeatTarget} — tap to change` : 'Add a repeat count'
+    });
+    repeatIcon.addEventListener('click', () => {
+      inlineEdit(repeatIcon, {
+        value: habit.repeatTarget == null ? '' : habit.repeatTarget,
+        type: 'number',
+        inputMode: 'numeric',
+        placeholder: '1 = off',
+        width: '3ch',
+        onCommit: (raw2) => {
+          const n = parseInt(String(raw2).trim(), 10);
+          if (Number.isFinite(n) && n > 1) {
+            habit.repeatTarget = n;
+          } else {
+            habit.repeatTarget = null;
+          }
+        }
+      });
+    });
+
     li.append(
-  el('label', { class: 'check-label' }, cb, nameEl),
-  ...reorderControls(section, habit),
-  el('button', { class: 'icon danger', text: '×', title: 'Delete', onClick: () => deleteHabit(section, habit) })
-);
+      label,
+      repeatIcon,
+      ...reorderControls(section, habit),
+      skipButton(key, habit.id, skipped),
+      el('button', { class: 'icon danger', text: '×', title: 'Delete', onClick: () => deleteHabit(section, habit) })
+    );
 
     return li;
   }
 
   /* ---------- counter / time habit ---------- */
 
-    function renderCounterHabit(section, habit, key) {
+      function renderCounterHabit(section, habit, key) {
     const isTime = habit.type === 'time';
     const li = el('li', { class: 'habit counter' });
     li.dataset.habitId = habit.id;
 
-    /* --- name row --- */
+    const skipped = isSkipped(key, habit.id);
+    if (skipped) li.classList.add('skipped');
+
+    function updateDone() {
+      li.classList.toggle('is-done', habitIsDone(key, habit));
+    }
+    updateDone();
+
     const nameEl = el('span', { class: 'name', text: habit.name || 'New habit', title: 'Tap to rename' });
     if (!habit.name) nameEl.style.color = 'var(--muted)';
     nameEl.addEventListener('click', () => {
@@ -803,36 +912,34 @@ function reorderControls(section, habit) {
         nameEl,
         el('div', { class: 'habit-head-actions' },
           ...reorderControls(section, habit),
+          skipButton(key, habit.id, skipped),
           el('button', { class: 'icon danger', text: '×', title: 'Delete', onClick: () => deleteHabit(section, habit) })
         )
       )
     );
 
-    /* --- main counter --- */
     li.append(buildCounterRow(section, habit, key, null, {
       target: habit.target,
       unit: habit.unit,
       step: habit.step || (isTime ? 5 : 1)
-    }));
+    }, updateDone));
 
-    /* --- repeat counter (count habits only) --- */
     if (!isTime && habit.repeatTarget != null) {
       const repeatRow = buildCounterRow(section, habit, key, 'r', {
         target: habit.repeatTarget,
         unit: habit.repeatUnit || 'times',
         step: habit.repeatStep || 1
-      });
+      }, updateDone);
       repeatRow.classList.add('counter-row-repeat');
       li.append(repeatRow);
     }
 
-    /* --- meta chips --- */
-    li.append(buildMetaRow(section, habit, key, isTime));
+        li.append(buildMetaRow(section, habit, key, isTime));
 
     return li;
   }
 
-  function buildCounterRow(section, habit, key, slot, opts) {
+    function buildCounterRow(section, habit, key, slot, opts, onChange) {
     const row = el('div', { class: 'counter-row' });
     const isTime = habit.type === 'time';
     const valueBtn = el('button', { class: 'value-btn', title: 'Tap to type an exact amount' });
@@ -841,13 +948,12 @@ function reorderControls(section, habit) {
       const raw = getEntry(key, habit.id, slot);
       return typeof raw === 'number' ? raw : 0;
     }
-    function refreshValue() {
+        function refreshValue() {
       const n = currentNumber();
       valueBtn.textContent = formatCounterValue(habit.type, n, opts.target, opts.unit);
       valueBtn.classList.toggle('has-value', n > 0);
-      row.classList.toggle('is-done', opts.target ? n >= opts.target : n > 0);
+      if (onChange) onChange();
     }
-    refreshValue();
 
     valueBtn.addEventListener('click', () => {
       const current = currentNumber();
@@ -1016,31 +1122,20 @@ function reorderControls(section, habit) {
 
   /* ---------- section progress ---------- */
 
-    function renderProgress(section, key) {
+      function renderProgress(section, key) {
     let total = 0, done = 0;
 
     for (const h of section.habits) {
-      if (h.type === 'check') {
-        total += 1;
-        if (getEntry(key, h.id)) done++;
-      } else {
-        total += 1;
-        const v = typeof getEntry(key, h.id) === 'number' ? getEntry(key, h.id) : 0;
-        if (h.target ? v >= h.target : v > 0) done++;
-
-        if (h.type === 'count' && h.repeatTarget != null) {
-          total += 1;
-          const rv = typeof getEntry(key, h.id, 'r') === 'number' ? getEntry(key, h.id, 'r') : 0;
-          if (rv >= h.repeatTarget) done++;
-        }
-      }
+      if (isSkipped(key, h.id)) continue;
+      total += 1;
+      if (habitIsDone(key, h)) done++;
     }
 
     const pct = total ? Math.round((done / total) * 100) : 0;
     const fill = el('div', { class: 'bar-fill' });
     fill.style.width = pct + '%';
 
-    return el('div', { class: 'progress' },
+        return el('div', { class: 'progress' },
       el('div', { class: 'progress-text', text: `${done} / ${total} complete` }),
       el('div', { class: 'bar' }, fill)
     );
@@ -1064,7 +1159,12 @@ function reorderControls(section, habit) {
           if (entry !== undefined) {
             rows.push(el('li', {},
               el('span', { class: 'name', text: habit.name || '(untitled)' }),
-              el('span', { class: 'value', text: habit.type === 'check' ? '✓' : formatValue(habit, entry) })
+              el('span', { class: 'value', text: habit.type === 'check'
+  ? (habit.repeatTarget != null
+      ? (typeof entry === 'number' ? entry : 0) + '/' + habit.repeatTarget
+      : '✓')
+  : formatValue(habit, entry)
+                })
             ));
           }
           if (repeatEntry !== undefined && habit.repeatTarget != null) {
