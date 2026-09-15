@@ -118,8 +118,16 @@
 
   /* ---------- habit list ---------- */
   .habits { list-style: none; margin: 0; padding: 0; }
-  .habit { border-top: 1px solid var(--border); }
-  .habit:first-child { border-top: none; }
+    .habit { position: relative; }
+  .habit:not(:first-child)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 6px;
+    right: 6px;
+    height: 1px;
+    background: var(--border);
+  }
     @keyframes row-flash {
     0%   { background: rgba(10, 132, 255, 0.18); }
     100% { background: transparent; }
@@ -127,13 +135,20 @@
   .habit.newly-added {
     animation: row-flash 1.2s ease-out;
   }
-      @keyframes row-moved-flash {
-    0%   { background: rgba(142, 142, 147, 0.15); }
-    100% { background: transparent; }
+        @keyframes row-moved-flash-fade {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
   }
-    .habit.just-moved {
-    animation: row-moved-flash 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  .habit.just-moved::after {
+    content: '';
+    position: absolute;
+    inset: 2px -2px;
     border-radius: 10px;
+    background: rgba(142, 142, 147, 0.18);
+    animation: row-moved-flash-fade 1.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    pointer-events: none;
+    will-change: opacity;
+    z-index: -1;
   }
   .empty-row { color: var(--muted); font-size: 13px; padding: 8px 0; list-style: none; }
 
@@ -599,7 +614,7 @@
   function markJustMoved(id) {
     justMovedId = id;
     clearTimeout(justMovedTimer);
-    justMovedTimer = setTimeout(() => { justMovedId = null; }, 1550);
+    justMovedTimer = setTimeout(() => { justMovedId = null; }, 1700);
   }
 
   /* ================================================================== */
