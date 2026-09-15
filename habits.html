@@ -193,6 +193,15 @@
     animation: count-bump 0.45s ease-out;
   }
 
+    @keyframes value-bump {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.10); }
+    100% { transform: scale(1); }
+  }
+  .habit.counter.just-logged .value-btn {
+    animation: value-bump 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
   /* counter habit */
   .habit.counter { padding: 10px 0 10px; }
   .habit-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
@@ -249,6 +258,30 @@
     white-space: nowrap;
   }
   .value-btn.has-value { color: var(--text); }
+    .value-btn.row-done { color: var(--done); }
+    .habit-head-name { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+  .habit-head-name .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rep-badge {
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 999px;
+    padding: 3px 9px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    flex: none;
+  }
+  .rep-badge:active { opacity: .6; }
+  .rep-badge.partial { color: var(--accent); border-color: var(--accent); border-style: solid; }
+  .rep-badge.done    { color: var(--done);   border-color: var(--done);   border-style: solid; }
+  .habit.counter.just-logged .rep-badge {
+    animation: count-bump 0.45s ease-out;
+  }
   .habit.counter.is-done .value-btn { color: var(--done); }
 
   .meta-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; padding-left: 2px; }
@@ -596,6 +629,28 @@
       title: skipped ? 'Unskip' : 'Skip for today',
       onClick: () => toggleSkip(key, habitId)
     });
+  }
+
+    function makeRepBadge(key, habit, slot, updateDone) {
+    const target = habit.repeatTarget;
+    const raw = getEntry(key, habit.id, slot);
+    const reps = typeof raw === 'number' ? raw : 0;
+    const done = reps >= target;
+    const cls = 'rep-badge' + (done ? ' done' : reps > 0 ? ' partial' : '');
+    const badge = el('button', {
+      class: cls,
+      text: reps + '/' + target,
+      title: 'Tap to add a rep — tap at ' + target + ' to reset'
+    });
+    badge.addEventListener('click', () => {
+      const cur = typeof getEntry(key, habit.id, slot) === 'number' ? getEntry(key, habit.id, slot) : 0;
+      const next = cur >= target ? 0 : cur + 1;
+      setEntry(key, habit.id, next, false, slot);
+      if (next > cur) markJustLogged(habit.id);
+      if (updateDone) updateDone();
+      render();
+    });
+    return badge;
   }
 
   /* ================================================================== */
@@ -960,13 +1015,14 @@ function reorderControls(section, habit) {
 
   /* ---------- counter / time habit ---------- */
 
-      function renderCounterHabit(section, habit, key) {
+          function renderCounterHabit(section, habit, key) {
     const isTime = habit.type === 'time';
     const li = el('li', { class: 'habit counter' });
     li.dataset.habitId = habit.id;
 
     const skipped = isSkipped(key, habit.id);
     if (skipped) li.classList.add('skipped');
+    if (justLoggedId === habit.id) li.classList.add('just-logged');
 
     function updateDone() {
       li.classList.toggle('is-done', habitIsDone(key, habit));
@@ -983,9 +1039,14 @@ function reorderControls(section, habit) {
       });
     });
 
+    const nameWrap = el('div', { class: 'habit-head-name' }, nameEl);
+    if (!isTime && habit.repeatTarget != null) {
+      nameWrap.append(makeRepBadge(key, habit, 'r', updateDone));
+    }
+
     li.append(
       el('div', { class: 'habit-head' },
-        nameEl,
+        nameWrap,
         el('div', { class: 'habit-head-actions' },
           ...reorderControls(section, habit),
           skipButton(key, habit.id, skipped),
@@ -999,16 +1060,6 @@ function reorderControls(section, habit) {
       unit: habit.unit,
       step: habit.step || (isTime ? 5 : 1)
     }, updateDone));
-
-    if (!isTime && habit.repeatTarget != null) {
-      const repeatRow = buildCounterRow(section, habit, key, 'r', {
-        target: habit.repeatTarget,
-        unit: habit.repeatUnit || 'times',
-        step: habit.repeatStep || 1
-      }, updateDone);
-      repeatRow.classList.add('counter-row-repeat');
-      li.append(repeatRow);
-    }
 
         li.append(buildMetaRow(section, habit, key, isTime));
 
@@ -1024,10 +1075,11 @@ function reorderControls(section, habit) {
       const raw = getEntry(key, habit.id, slot);
       return typeof raw === 'number' ? raw : 0;
     }
-        function refreshValue() {
+                function refreshValue() {
       const n = currentNumber();
       valueBtn.textContent = formatCounterValue(habit.type, n, opts.target, opts.unit);
       valueBtn.classList.toggle('has-value', n > 0);
+      valueBtn.classList.toggle('row-done', opts.target ? n >= opts.target : n > 0);
       if (onChange) onChange();
     }
       refreshValue();
@@ -1039,12 +1091,16 @@ function reorderControls(section, habit) {
           value: current ? formatMinutes(current) : '',
           placeholder: 'e.g. 1h 30m',
           className: 'value-input',
-          onCommit: (raw) => {
+                    onCommit: (raw) => {
             const mins = parseDuration(raw);
-            setEntry(key, habit.id, Math.max(0, mins || 0), false, slot);
+            const n = Math.max(0, mins || 0);
+            setEntry(key, habit.id, n, false, slot);
+            if (opts.target && current < opts.target && n >= opts.target) {
+              markJustLogged(habit.id);
+            }
           }
         });
-      } else {
+            } else {
         inlineEdit(valueBtn, {
           value: current,
           type: 'number',
@@ -1053,6 +1109,9 @@ function reorderControls(section, habit) {
           onCommit: (raw) => {
             const n = Math.max(0, Math.round(Number(String(raw).trim()) || 0));
             setEntry(key, habit.id, n, false, slot);
+            if (opts.target && current < opts.target && n >= opts.target) {
+              markJustLogged(habit.id);
+            }
           }
         });
       }
@@ -1078,10 +1137,15 @@ function reorderControls(section, habit) {
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt =>
         btn.addEventListener(evt, stopTimers)
       );
-      btn.addEventListener('click', () => {
+            btn.addEventListener('click', () => {
         stopTimers();
         if (didRepeat) { didRepeat = false; save(); render(); return; }
+        const before = currentNumber();
         apply(false);
+        const after = currentNumber();
+        if (delta > 0 && opts.target && before < opts.target && after >= opts.target) {
+          markJustLogged(habit.id);
+        }
         render();
       });
       return btn;
@@ -1139,7 +1203,7 @@ function reorderControls(section, habit) {
     });
     metaRow.append(stepChip);
 
-    // unit (counters only)
+            // unit (counters only)
     if (!isTime) {
       const unitChip = el('button', {
         class: 'meta-chip' + (habit.unit ? '' : ' add'),
@@ -1155,44 +1219,44 @@ function reorderControls(section, habit) {
         });
       });
       metaRow.append(unitChip);
+    }
 
-      // repeat counter toggle
-      const repeatChip = el('button', { class: 'meta-chip' });
-      if (habit.repeatTarget != null) {
-        repeatChip.textContent = 'repeat ×' + habit.repeatTarget;
-        repeatChip.title = 'Tap to change the repeat goal';
-      } else {
-        repeatChip.textContent = '+ repeat';
-        repeatChip.classList.add('add');
-        repeatChip.title = 'Add a second counter (e.g. times per day)';
-      }
-      repeatChip.addEventListener('click', () => {
-        inlineEdit(repeatChip, {
-          value: habit.repeatTarget == null ? '' : habit.repeatTarget,
-          type: 'number',
-          inputMode: 'numeric',
-          placeholder: '0 = off',
-          width: '4ch',
-          onCommit: (raw) => {
-            const n = parseInt(String(raw).trim(), 10);
-            if (Number.isFinite(n) && n > 0) {
-              habit.repeatTarget = n;
-              if (!habit.repeatUnit) habit.repeatUnit = 'times';
-              if (!habit.repeatStep) habit.repeatStep = 1;
-            } else {
-              habit.repeatTarget = null;
-              habit.repeatUnit = null;
-              habit.repeatStep = null;
-              for (const k of Object.keys(data.logs)) {
-                delete data.logs[k][habit.id + ':r'];
-                if (Object.keys(data.logs[k]).length === 0) delete data.logs[k];
-              }
+    // repeat (any habit type)
+    const repeatChip = el('button', { class: 'meta-chip' });
+    if (habit.repeatTarget != null) {
+      repeatChip.textContent = 'repeat ×' + habit.repeatTarget;
+      repeatChip.title = 'Tap to change the repeat goal';
+    } else {
+      repeatChip.textContent = '+ repeat';
+      repeatChip.classList.add('add');
+      repeatChip.title = 'Add a repetition goal';
+    }
+    repeatChip.addEventListener('click', () => {
+      inlineEdit(repeatChip, {
+        value: habit.repeatTarget == null ? '' : habit.repeatTarget,
+        type: 'number',
+        inputMode: 'numeric',
+        placeholder: '0 = off',
+        width: '4ch',
+        onCommit: (raw) => {
+          const n = parseInt(String(raw).trim(), 10);
+          if (Number.isFinite(n) && n > 0) {
+            habit.repeatTarget = n;
+            if (!habit.repeatUnit) habit.repeatUnit = 'times';
+            if (!habit.repeatStep) habit.repeatStep = 1;
+          } else {
+            habit.repeatTarget = null;
+            habit.repeatUnit = null;
+            habit.repeatStep = null;
+            for (const k of Object.keys(data.logs)) {
+              delete data.logs[k][habit.id + ':r'];
+              if (Object.keys(data.logs[k]).length === 0) delete data.logs[k];
             }
           }
-        });
+        }
       });
-      metaRow.append(repeatChip);
-    }
+    });
+    metaRow.append(repeatChip);
 
     return metaRow;
   }
