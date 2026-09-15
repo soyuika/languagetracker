@@ -157,21 +157,23 @@
     display: flex; align-items: center; gap: 8px; padding: 10px 0;
   }
   .check-label { display: flex; align-items: center; gap: 10px; flex: 1; cursor: pointer; min-width: 0; }
-  .check-label input { width: 21px; height: 21px; accent-color: var(--accent); flex: none; }
-  .habit.check .name { font-size: 15px; }
-  .habit.check.done .name { color: var(--muted); text-decoration: line-through; }
-    .habit.check.has-repeat .check-label input {
+    .check-label input {
     appearance: none;
     -webkit-appearance: none;
     width: 22px; height: 22px;
     border: 2px solid var(--muted);
     border-radius: 50%;
     position: relative;
-    transition: border-color .15s, background .15s;
     background: transparent;
+    flex: none;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
   }
-  .habit.check.has-repeat.partial .check-label input { border-color: var(--accent); }
-  .habit.check.has-repeat.partial .check-label input::after {
+  .habit.check .name { font-size: 15px; }
+
+  /* partial — only fires on repeat habits with 1+ reps */
+  .habit.check.partial .check-label input { border-color: var(--accent); }
+  .habit.check.partial .check-label input::after {
     content: '';
     position: absolute;
     inset: 4px;
@@ -179,11 +181,13 @@
     background: var(--accent);
     opacity: 0.7;
   }
-  .habit.check.has-repeat.done .check-label input {
+
+  /* done — green fill with a checkmark */
+  .habit.check.done .check-label input {
     background: var(--done);
     border-color: var(--done);
   }
-  .habit.check.has-repeat.done .check-label input::after {
+  .habit.check.done .check-label input::after {
     content: '✓';
     position: absolute;
     inset: 0;
@@ -195,6 +199,7 @@
     font-weight: 700;
     line-height: 1;
   }
+  .habit.check.done .name { color: var(--done); }
   .check-count.partial { color: var(--accent); }
     /* --- just-logged feedback --- */
   @keyframes check-pop {
