@@ -127,12 +127,12 @@
   .habit.newly-added {
     animation: row-flash 1.2s ease-out;
   }
-    @keyframes row-moved-flash {
-    0%   { background: rgba(142, 142, 147, 0.35); }
+      @keyframes row-moved-flash {
+    0%   { background: rgba(142, 142, 147, 0.15); }
     100% { background: transparent; }
   }
   .habit.just-moved {
-    animation: row-moved-flash 0.9s ease-out;
+    animation: row-moved-flash 1.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .empty-row { color: var(--muted); font-size: 13px; padding: 8px 0; list-style: none; }
 
@@ -329,6 +329,37 @@
   }
   .icon:hover { color: var(--text); }
   .habit-head-actions { display: flex; align-items: center; flex: none; }
+    /* reorder pair — muted, sits together */
+  .icon.reorder {
+    font-size: 14px;
+    padding: 6px 5px;
+    opacity: 0.4;
+  }
+  .icon.reorder:hover:not([disabled]) { opacity: 1; }
+
+  /* skip — slightly more present than reorder */
+  .icon.skip { opacity: 0.65; margin-left: 4px; }
+  .icon.skip:hover { opacity: 1; }
+  .icon.skip.skip-on { opacity: 1; }
+
+  /* delete — red, pushed away with a divider */
+  .icon.danger {
+    color: var(--danger);
+    opacity: 0.8;
+    margin-left: 6px;
+    position: relative;
+  }
+  .icon.danger:hover { opacity: 1; }
+  .icon.danger::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 50%;
+    height: 18px;
+    width: 1px;
+    background: var(--border);
+    transform: translateY(-50%);
+  }
 .icon[disabled] { opacity: .25; pointer-events: none; }
 
   /* ---------- inline inputs ---------- */
@@ -567,7 +598,7 @@
   function markJustMoved(id) {
     justMovedId = id;
     clearTimeout(justMovedTimer);
-    justMovedTimer = setTimeout(() => { justMovedId = null; }, 950);
+    justMovedTimer = setTimeout(() => { justMovedId = null; }, 1550);
   }
 
   /* ================================================================== */
@@ -645,7 +676,7 @@
 
   function skipButton(key, habitId, skipped) {
     return el('button', {
-      class: 'icon' + (skipped ? ' skip-on' : ''),
+      class: 'icon skip' + (skipped ? ' skip-on' : ''),
       text: skipped ? '↺' : '⊘',
       title: skipped ? 'Unskip' : 'Skip for today',
       onClick: () => toggleSkip(key, habitId)
@@ -824,12 +855,12 @@ function reorderControls(section, habit) {
   const last = section.habits.length - 1;
   return [
     el('button', {
-      class: 'icon', text: '↑', title: 'Move up',
+      class: 'icon reorder', text: '↑', title: 'Move up',
       disabled: i <= 0,
       onClick: () => moveHabit(section, habit, -1)
     }),
     el('button', {
-      class: 'icon', text: '↓', title: 'Move down',
+      class: 'icon reorder', text: '↓', title: 'Move down',
       disabled: i >= last,
       onClick: () => moveHabit(section, habit, 1)
     })
