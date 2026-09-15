@@ -301,6 +301,23 @@
     if (!isTime && habit.unit) out += ' ' + habit.unit;
     return out;
   }
+  
+  function parseDuration(input) {
+  const s = String(input).trim().toLowerCase().replace(/\s+/g, '');
+  if (!s) return null;
+  // Plain number → interpret as minutes.
+  if (/^\d+(\.\d+)?$/.test(s)) return Math.round(parseFloat(s));
+  // Otherwise parse "1h30m", "1.5h", "45min", "2 hours", etc.
+  let total = 0, matched = false;
+  const re = /(\d+(?:\.\d+)?)(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)/g;
+  let m;
+  while ((m = re.exec(s)) !== null) {
+    matched = true;
+    const n = parseFloat(m[1]);
+    total += m[2][0] === 'h' ? n * 60 : n;
+  }
+  return matched ? Math.round(total) : null;
+}
 
   /* ================================================================== */
   /* state                                                               */
@@ -576,6 +593,7 @@ function reorderControls(section, habit) {
       html:
         '<b>Tip:</b> press and hold the −/+ buttons to repeat quickly.<br>' +
         'Tap any name, number or chip to edit it right here.<br>' +
+        'Time goals accept <b>1h</b>, <b>1.5h</b>, <b>90m</b> or <b>1h 30m</b>.<br>' +
         'Checkboxes clear automatically each day — everything is stored in this browser only.'
     }));
   }
@@ -690,17 +708,30 @@ function reorderControls(section, habit) {
     refreshValue();
 
     valueBtn.addEventListener('click', () => {
-      inlineEdit(valueBtn, {
-        value: currentNumber(),
-        type: 'number',
-        inputMode: 'numeric',
-        className: 'value-input',
-        onCommit: (raw) => {
-          const n = Math.max(0, Math.round(Number(String(raw).trim()) || 0));
-          setEntry(key, habit.id, n);
-        }
-      });
+  const current = currentNumber();
+  if (isTime) {
+    inlineEdit(valueBtn, {
+      value: current ? formatMinutes(current) : '',
+      placeholder: 'e.g. 1h 30m',
+      className: 'value-input',
+      onCommit: (raw) => {
+        const mins = parseDuration(raw);
+        setEntry(key, habit.id, Math.max(0, mins || 0));
+      }
     });
+  } else {
+    inlineEdit(valueBtn, {
+      value: current,
+      type: 'number',
+      inputMode: 'numeric',
+      className: 'value-input',
+      onCommit: (raw) => {
+        const n = Math.max(0, Math.round(Number(String(raw).trim()) || 0));
+        setEntry(key, habit.id, n);
+      }
+    });
+  }
+});
 
     /* --- step buttons (with press-and-hold repeat) --- */
     const step = habit.step || (isTime ? 5 : 1);
@@ -766,11 +797,23 @@ function reorderControls(section, habit) {
       goalChip.title = 'Set a daily goal';
     }
     goalChip.addEventListener('click', () => {
-      editNumber(goalChip, habit.target, {
-        placeholder: 'none',
-        onCommit: (n) => { habit.target = n; }
-      });
+  if (isTime) {
+    inlineEdit(goalChip, {
+      value: habit.target != null ? formatMinutes(habit.target) : '',
+      placeholder: 'e.g. 1h 30m',
+      width: '9ch',
+      onCommit: (raw) => {
+        const mins = parseDuration(raw);
+        habit.target = (mins && mins > 0) ? mins : null;
+      }
     });
+  } else {
+    editNumber(goalChip, habit.target, {
+      placeholder: 'none',
+      onCommit: (n) => { habit.target = n; }
+    });
+  }
+});
 
     // step
     const stepChip = el('button', {
