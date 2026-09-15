@@ -130,6 +130,42 @@
   .check-label input { width: 21px; height: 21px; accent-color: var(--accent); flex: none; }
   .habit.check .name { font-size: 15px; }
   .habit.check.done .name { color: var(--muted); text-decoration: line-through; }
+    .habit.check.has-repeat .check-label input {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border: 2px solid var(--muted);
+    border-radius: 50%;
+    position: relative;
+    transition: border-color .15s, background .15s;
+    background: transparent;
+  }
+  .habit.check.has-repeat.partial .check-label input { border-color: var(--accent); }
+  .habit.check.has-repeat.partial .check-label input::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.7;
+  }
+  .habit.check.has-repeat.done .check-label input {
+    background: var(--done);
+    border-color: var(--done);
+  }
+  .habit.check.has-repeat.done .check-label input::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .check-count.partial { color: var(--accent); }
 
   /* counter habit */
   .habit.counter { padding: 10px 0 10px; }
@@ -812,7 +848,9 @@ function reorderControls(section, habit) {
     const target = hasRepeat ? habit.repeatTarget : 1;
     const done = hasRepeat ? count >= target : !!raw;
 
+        if (hasRepeat) li.classList.add('has-repeat');
     if (done) li.classList.add('done');
+    else if (hasRepeat && count > 0) li.classList.add('partial');
     if (skipped) li.classList.add('skipped');
 
     const cb = document.createElement('input');
@@ -841,9 +879,11 @@ function reorderControls(section, habit) {
     });
 
     const label = el('label', { class: 'check-label' }, cb, nameEl);
-    if (hasRepeat) {
+        if (hasRepeat) {
+      const countClass = 'check-count'
+        + (done ? ' done' : (count > 0 ? ' partial' : ''));
       label.append(el('span', {
-        class: 'check-count' + (done ? ' done' : ''),
+        class: countClass,
         text: count + '/' + target
       }));
     }
@@ -858,8 +898,8 @@ function reorderControls(section, habit) {
         value: habit.repeatTarget == null ? '' : habit.repeatTarget,
         type: 'number',
         inputMode: 'numeric',
-        placeholder: '1 = off',
-        width: '3ch',
+                placeholder: '0 = off',
+        width: '7ch',
         onCommit: (raw2) => {
           const n = parseInt(String(raw2).trim(), 10);
           if (Number.isFinite(n) && n > 1) {
