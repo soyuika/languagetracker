@@ -118,7 +118,7 @@
 
   /* ---------- habit list ---------- */
   .habits { list-style: none; margin: 0; padding: 0; }
-    .habit { position: relative; }
+      .habit { position: relative; isolation: isolate; }
   .habit:not(:first-child)::before {
     content: '';
     position: absolute;
