@@ -679,11 +679,14 @@
       return !!raw;
     }
 
-    // counter
+        // counter / time
     const v = typeof getEntry(key, habit.id) === 'number' ? getEntry(key, habit.id) : 0;
-    const mainDone = habit.target ? v >= habit.target : v > 0;
+    const effectiveTarget = (habit.type === 'time' && habit.repeatTarget && habit.target)
+      ? habit.target * habit.repeatTarget
+      : habit.target;
+    const mainDone = effectiveTarget ? v >= effectiveTarget : v > 0;
     let repeatDone = true;
-    if (habit.type === 'count' && habit.repeatTarget != null) {
+    if (habit.repeatTarget != null) {
       const rv = typeof getEntry(key, habit.id, 'r') === 'number' ? getEntry(key, habit.id, 'r') : 0;
       repeatDone = rv >= habit.repeatTarget;
     }
@@ -1116,8 +1119,8 @@ function reorderControls(section, habit) {
       });
     });
 
-    const nameWrap = el('div', { class: 'habit-head-name' }, nameEl);
-    if (!isTime && habit.repeatTarget != null) {
+        const nameWrap = el('div', { class: 'habit-head-name' }, nameEl);
+    if (habit.repeatTarget != null) {
       nameWrap.append(makeRepBadge(key, habit, 'r', updateDone));
     }
 
@@ -1132,8 +1135,12 @@ function reorderControls(section, habit) {
       )
     );
 
+        const effectiveTarget = (isTime && habit.repeatTarget && habit.target)
+      ? habit.target * habit.repeatTarget
+      : habit.target;
+
     li.append(buildCounterRow(section, habit, key, null, {
-      target: habit.target,
+      target: effectiveTarget,
       unit: habit.unit,
       step: habit.step || (isTime ? 5 : 1)
     }, updateDone));
@@ -1241,9 +1248,11 @@ function reorderControls(section, habit) {
 
     // goal
     const goalChip = el('button', { class: 'meta-chip' });
-    if (habit.target != null) {
-      goalChip.textContent = 'goal ' + (isTime ? formatMinutes(habit.target) : habit.target);
-      goalChip.title = 'Tap to change the daily goal';
+        if (habit.target != null) {
+      let label = 'goal ' + (isTime ? formatMinutes(habit.target) : habit.target);
+      if (isTime && habit.repeatTarget) label += ' ×' + habit.repeatTarget;
+      goalChip.textContent = label;
+      goalChip.title = 'Tap to change the per-session goal';
     } else {
       goalChip.textContent = '+ goal';
       goalChip.classList.add('add');
