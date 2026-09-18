@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>What should I do to learn my language?</title>
+<style>
+  :root{
+    --bg1:#eef3ff; --bg2:#f6f7f9;
+    --card:#ffffff; --ink:#161b22; --muted:#5b6472;
+    --accent:#3b6cf6; --accent-soft:#eaf0ff;
+    --ok:#0f9d58; --ok-soft:#e8f7ee;
+    --warn:#c2410c; --warn-soft:#fff1e8;
+    --border:#e4e8ef;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:32px 16px 72px;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:radial-gradient(1100px 520px at 50% -12%, var(--bg1), var(--bg2) 62%) fixed;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto}
+
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:22px;
+    padding:26px 28px 22px;
+    box-shadow:0 24px 60px -34px rgba(20,35,80,.35);
+  }
+
+  /* ---------- progress ---------- */
+  .progress{margin-bottom:24px}
+  .track{height:6px;background:#eef1f6;border-radius:99px;overflow:hidden}
+  #bar{display:block;height:100%;width:0;border-radius:99px;
+       background:linear-gradient(90deg,#3b6cf6,#7aa2ff);transition:width .3s ease}
+  .ptext{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+         color:var(--muted);margin-top:9px}
+
+  /* ---------- steps ---------- */
+  .step{display:none}
+  .step.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  h1{font-size:23px;line-height:1.32;margin:0 0 8px;letter-spacing:-.01em}
+  h1 em{font-style:normal;background:var(--accent-soft);color:var(--accent);
+        border-radius:7px;padding:1px 9px}
+  .sub{color:var(--muted);font-size:14.5px;line-height:1.55;margin:0 0 20px}
+
+  /* ---------- options ---------- */
+  .option{
+    display:flex;gap:13px;align-items:flex-start;
+    border:1.5px solid var(--border);border-radius:15px;
+    padding:15px 17px;margin-bottom:10px;cursor:pointer;
+    background:#fff;transition:border-color .15s,background .15s,box-shadow .15s;
+  }
+  .option:hover{border-color:#c9d4ea;background:#fafbff}
+  .option.selected{border-color:var(--accent);background:var(--accent-soft);
+                   box-shadow:0 0 0 3px rgba(59,108,246,.12)}
+  .option input{margin:3px 0 0;flex:none;width:18px;height:18px;accent-color:var(--accent)}
+  .option-body{display:flex;flex-direction:column;gap:3px}
+  .option-body strong{font-size:15.5px;line-height:1.35}
+  .option-body span{font-size:13.5px;color:var(--muted);line-height:1.45}
+
+  /* ---------- input ---------- */
+  input[type=number]{
+    width:100%;font:inherit;font-size:17px;font-weight:600;
+    padding:14px 16px;border:1.5px solid var(--border);border-radius:14px;
+    background:#fbfcfe;color:var(--ink);outline:none;transition:.15s;
+  }
+  input[type=number]:focus{border-color:var(--accent);background:#fff;
+                           box-shadow:0 0 0 3px rgba(59,108,246,.12)}
+  .links{font-size:14px;line-height:1.9;color:var(--muted);margin:0 0 18px}
+  .links a{color:var(--accent);text-decoration:none;font-weight:600;
+           border-bottom:1.5px solid rgba(59,108,246,.3)}
+  .links a:hover{border-bottom-color:var(--accent)}
+  .hint{font-size:13px;color:var(--warn);margin:10px 0 0;min-height:18px;font-weight:600}
+
+  /* ---------- nav ---------- */
+  .nav{display:flex;justify-content:space-between;align-items:center;gap:12px;
+       margin-top:26px;padding-top:18px;border-top:1px solid #eef1f6}
+  button{font:inherit;font-weight:650;border-radius:12px;padding:11px 22px;
+         border:1.5px solid transparent;cursor:pointer;transition:.15s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#2f5be0}
+  .btn-ghost{background:#fff;border-color:var(--border);color:var(--muted)}
+  .btn-ghost:hover{background:#f5f6f8;color:var(--ink)}
+  #backBtn{visibility:hidden}
+
+  /* ---------- results ---------- */
+  .headline{font-size:15.5px;font-weight:650;line-height:1.5;
+            background:var(--accent-soft);color:#1e3a8a;
+            border-radius:14px;padding:14px 16px;margin:0 0 18px}
+
+  .rec{border:1px solid var(--border);border-radius:16px;
+       padding:18px 20px;margin-bottom:14px;background:#fff}
+  .rec h3{margin:0 0 12px;font-size:15.5px;display:flex;align-items:center;
+          gap:9px;flex-wrap:wrap}
+  .rec p{margin:0 0 11px;font-size:14.6px;line-height:1.65}
+  .rec p:last-child{margin-bottom:0}
+  .rec strong{font-weight:650}
+  .rec a{color:var(--accent);font-weight:600;text-decoration:none;
+         border-bottom:1.5px solid rgba(59,108,246,.3)}
+  .rec a:hover{border-bottom-color:var(--accent)}
+
+  .badge{display:inline-block;font-size:10.5px;font-weight:800;
+         letter-spacing:.06em;text-transform:uppercase;
+         padding:4px 9px;border-radius:99px;white-space:nowrap}
+  .badge.pri{background:var(--accent-soft);color:var(--accent)}
+  .badge.warn{background:var(--warn-soft);color:var(--warn)}
+  .badge.ok{background:var(--ok-soft);color:var(--ok)}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:14px 0 8px}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #eef1f6}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+     color:var(--muted);font-weight:700}
+  td:first-child{font-weight:650;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  .muted{color:var(--muted);font-weight:400}
+  .ok-txt{color:var(--ok);font-weight:650}
+  .small{font-size:13px;line-height:1.6}
+
+  /* ---------- study-methods accordions ---------- */
+  details{border:1px solid var(--border);border-radius:13px;margin-bottom:9px;
+          overflow:hidden;background:#fbfcfe}
+  details[open]{background:#fff;border-color:#d7e0f0}
+  details:last-of-type{margin-bottom:0}
+  summary{cursor:pointer;padding:13px 16px;font-weight:650;font-size:14.5px;
+          list-style:none;display:flex;align-items:center;gap:9px;
+          transition:background .15s}
+  summary:hover{background:#f3f6fd}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸";color:var(--accent);font-size:12px;
+                  transition:transform .18s;flex:none}
+  details[open] summary::before{transform:rotate(90deg)}
+  .dbody{padding:2px 16px 16px 34px;font-size:14.3px;line-height:1.65;color:#2b3442}
+  .dbody p{margin:0 0 11px}
+  .dbody ul,.dbody ol{margin:6px 0 12px;padding-left:19px}
+  .dbody li{margin-bottom:6px}
+  .dbody li:last-child{margin-bottom:0}
+  .dbody em{color:var(--muted)}
+  .avoid{background:var(--warn-soft);border-radius:10px;padding:10px 13px;
+         font-size:13.4px;color:#7c2d12;line-height:1.55;margin:12px 0 0 !important}
+
+  .restart{margin-top:6px;width:100%;padding:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+
+    <div class="progress">
+      <div class="track"><span id="bar"></span></div>
+      <div class="ptext" id="progressText">Step 1 of 4</div>
+    </div>
+
+    <!-- ============ STEP 1 ============ -->
+    <section class="step active" data-step="0">
+      <h1>I want to <em>______</em>, but I can't now.<br>What should I do?</h1>
+      <p class="sub">Pick the one that matters most to you right now.</p>
+
+      <label class="option">
+        <input type="radio" name="goal" value="understand">
+        <span class="option-body">
+          <strong>Understand the language</strong>
+          <span>Watch movies, TV shows, YouTube, read books for natives</span>
+        </span>
+      </label>
+
+      <label class="option">
+        <input type="radio" name="goal" value="speak">
+        <span class="option-body">
+          <strong>Speak fluently in the language</strong>
+          <span>Hold real conversations without freezing up</span>
+        </span>
+      </label>
+    </section>
+
+    <!-- ============ STEP 2 ============ -->
+    <section class="step" data-step="1">
+      <h1>My current vocabulary size is…</h1>
+      <p class="sub">Put in your best estimate. Not sure? Take a quick test first:</p>
+      <p class="links">
+        🇬🇧 English — <a href="https://myvocab.info/en" target="_blank" rel="noopener">myvocab.info/en</a><br>
+        🇯🇵 Japanese — <a href="https://glenn-sun.github.io/japanese-vocab-test/" target="_blank" rel="noopener">japanese-vocab-test</a>
+      </p>
+      <input type="number" id="vocabInput" min="0" max="200000" step="100"
+             placeholder="e.g. 3000" autocomplete="off">
+      <p class="hint" id="vocabHint"></p>
+    </section>
+
+    <!-- ============ STEP 3 ============ -->
+    <section class="step" data-step="2">
+      <h1>Grammar check</h1>
+      <p class="sub">Tick everything that is true for you right now.</p>
+
+      <label class="option">
+        <input type="checkbox" id="gRead">
+        <span class="option-body">
+          <strong>I have read through an entire beginner grammar textbook</strong>
+          <span>…and understood every rule in it, and memorized the key points of each section.</span>
+          <span class="links" style="margin:8px 0 0">
+            🇬🇧 English — <a href="https://drive.google.com/file/d/12kyd440RqO-UAnhiPJ3jtS5sn7aLz6_9/view?usp=sharing" target="_blank" rel="noopener">beginner grammar textbook (PDF)</a><br>
+            🇯🇵 Japanese — <a href="https://guidetojapanese.org/learn/grammar" target="_blank" rel="noopener">Tae Kim's Grammar Guide (PDF on site)</a>
+          </span>
+        </span>
+      </label>
+
+      <label class="option">
+        <input type="checkbox" id="gSelf">
+        <span class="option-body">
+          <strong>I can correct my own grammar mistakes in sentences</strong>
+          <span>I can look at a sentence I wrote, spot what's wrong, and explain why.</span>
+        </span>
+      </label>
+    </section>
+
+    <!-- ============ STEP 4 ============ -->
+    <section class="step" data-step="3">
+      <h1>Immersion check</h1>
+      <p class="sub">Tick it if it's true.</p>
+
+      <label class="option">
+        <input type="checkbox" id="hours1000">
+        <span class="option-body">
+          <strong>I have watched / listened to over 1,000 hours of native content</strong>
+          <span>Movies, TV shows, YouTube, podcasts, streams — in the target language.</span>
+        </span>
+      </label>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <section class="step" data-step="4">
+      <h1>Your plan</h1>
+      <p class="sub" style="margin-bottom:14px">Here's what to do next, in order.</p>
+      <p class="headline" id="headline"></p>
+      <div id="resultsBody"></div>
+      <button class="btn-ghost restart" id="restartBtn">↺ Start over</button>
+    </section>
+
+    <!-- ============ NAV ============ -->
+    <div class="nav" id="nav">
+      <button class="btn-ghost" id="backBtn">← Back</button>
+      <button class="btn-primary" id="nextBtn">Next →</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — tweak these to change the algorithm
+   ============================================================ */
+const TARGET_FLUENCY = 10000;   // basic fluency threshold
+const TARGET_READING = 20000;   // comfortable native reading
+const PACES = [5, 10, 15, 20, 30, 50]; // words per day
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  goal: null,          // 'understand' | 'speak'
+  vocab: null,
+  grammarRead: false,
+  selfCorrect: false,
+  hours1000: false
+};
+
+const TOTAL_QUESTIONS = 4;
+let step = 0;
+
+const $ = id => document.getElementById(id);
+const bar = $('bar'), progressText = $('progressText');
+const backBtn = $('backBtn'), nextBtn = $('nextBtn'), nav = $('nav');
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function show(i){
+  step = i;
+
+  document.querySelectorAll('.step').forEach(s => {
+    s.classList.toggle('active', Number(s.dataset.step) === i);
+  });
+
+  const isResults = i === TOTAL_QUESTIONS;
+
+  progressText.textContent = isResults ? 'Your plan' : `Step ${i + 1} of ${TOTAL_QUESTIONS}`;
+  bar.style.width = ((isResults ? TOTAL_QUESTIONS : i) / TOTAL_QUESTIONS * 100) + '%';
+
+  nav.style.display = isResults ? 'none' : 'flex';
+  backBtn.style.visibility = i === 0 ? 'hidden' : 'visible';
+  nextBtn.textContent = i === TOTAL_QUESTIONS - 1 ? 'Get my plan →' : 'Next →';
+
+  if (isResults) renderResults();
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+nextBtn.addEventListener('click', () => {
+  if (step === 0){
+    const picked = document.querySelector('input[name="goal"]:checked');
+    if (!picked) return flash('Pick one to continue.', 0);
+    state.goal = picked.value;
+  }
+
+  if (step === 1){
+    const raw = $('vocabInput').value.trim();
+    const n = Number(raw);
+    if (raw === '' || !Number.isFinite(n) || n < 0){
+      $('vocabHint').textContent = 'Please enter a number (0 is fine if you truly know nothing yet).';
+      return;
+    }
+    $('vocabHint').textContent = '';
+    state.vocab = Math.round(n);
+  }
+
+  if (step === 2){
+    state.grammarRead = $('gRead').checked;
+    state.selfCorrect = $('gSelf').checked;
+  }
+
+  if (step === 3){
+    state.hours1000 = $('hours1000').checked;
+  }
+
+  show(step + 1);
+});
+
+backBtn.addEventListener('click', () => show(Math.max(0, step - 1)));
+$('restartBtn').addEventListener('click', () => location.reload());
+
+function flash(msg, s){
+  const el = document.querySelector(`.step[data-step="${s}"] .sub`);
+  if (!el) return;
+  const original = el.textContent;
+  el.textContent = msg;
+  el.style.color = 'var(--warn)';
+  setTimeout(() => { el.textContent = original; el.style.color = ''; }, 2200);
+}
+
+/* nice selected-state styling (works without :has()) */
+document.querySelectorAll('input[type=radio], input[type=checkbox]').forEach(inp => {
+  inp.addEventListener('change', () => {
+    if (inp.type === 'radio'){
+      document.querySelectorAll(`input[name="${inp.name}"]`).forEach(r => {
+        r.closest('.option').classList.toggle('selected', r.checked);
+      });
+    } else {
+      inp.closest('.option').classList.toggle('selected', inp.checked);
+    }
+  });
+});
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function fmtDuration(wordsLeft, pace){
+  if (wordsLeft <= 0) return '<span class="ok-txt">✓ already there</span>';
+  const days = wordsLeft / pace;
+  const d = Math.ceil(days);
+  let extra = '';
+
+  if (days >= 365.25){
+    const y = Math.round((days / 365.25) * 10) / 10;
+    extra = ` · ${y === 1 ? '1 year' : y + ' years'}`;
+  } else if (days >= 60){
+    const mo = Math.round((days / 30.44) * 10) / 10;
+    extra = ` · ${mo === 1 ? '1 month' : mo + ' months'}`;
+  }
+
+  return `${d.toLocaleString('en-US')} day${d === 1 ? '' : 's'}<span class="muted">${extra}</span>`;
+}
+
+function n(x){ return x.toLocaleString('en-US'); }
+
+/* ============================================================
+   RESULTS
+   ============================================================ */
+function renderResults(){
+  const { goal, vocab, grammarRead, selfCorrect, hours1000 } = state;
+  const T1 = TARGET_FLUENCY, T2 = TARGET_READING;
+
+  /* ---------- headline ---------- */
+  let headline;
+  if (!grammarRead){
+    headline = 'Start here: finish a beginner grammar textbook. Everything else in this plan is built on top of it.';
+  } else if (vocab < T1){
+    headline = `Your #1 job right now: learn ${n(T1 - vocab)} more words.`;
+  } else if (!hours1000){
+    headline = 'Your #1 job right now: stack hours of native content until you hit 1,000.';
+  } else if (goal === 'speak'){
+    headline = 'You have the foundation. Now build the output side — start speaking.';
+  } else {
+    headline = 'You\'re in the long middle. Keep stacking hours — that\'s exactly where you should be.';
+  }
+  $('headline').textContent = headline;
+
+  const out = [];
+
+  /* ==========================================================
+     1. VOCABULARY
+     ========================================================== */
+  {
+    let body = '';
+
+    if (vocab >= T2){
+      body = `<p>With roughly <strong>${n(vocab)} words</strong> you're already past the ~20,000-word mark where native fiction of almost any genre becomes comfortable. Vocabulary is no longer your bottleneck — the work now is in <em>how</em> you use it (see below).</p>`;
+    } else {
+      const nextTarget = vocab < T1 ? T1 : T2;
+      const need = nextTarget - vocab;
+
+      if (vocab < T1){
+        body += `<p>You know roughly <strong>${n(vocab)} words</strong>.</p>`;
+        body += `<p><strong>10,000 words</strong> is the rough threshold for <strong>basic fluency</strong> — enough to understand most of what you encounter and to express most of your thoughts without much struggle. You're <strong>${n(need)} words</strong> away from it.</p>`;
+        body += `<p>And to genuinely <em>enjoy</em> reading in the language — native fiction, a variety of genres, picking up any book you want — the number goes closer to <strong>20,000 words</strong>. That's <strong>${n(T2 - vocab)} words</strong> away.</p>`;
+      } else {
+        body += `<p>You know roughly <strong>${n(vocab)} words</strong> — past the ~10,000-word threshold for basic fluency. Nice.</p>`;
+        body += `<p>To comfortably read <em>any</em> book, including native fiction across genres, aim for <strong>20,000 words</strong>. You're <strong>${n(need)} words</strong> away.</p>`;
+      }
+
+      body += `<p><strong>So: learn new vocabulary.</strong> Here's how long it takes at different daily paces:</p>`;
+
+      const rows = PACES.map(pace => {
+        const col1 = vocab < T1 ? fmtDuration(T1 - vocab, pace) : '<span class="ok-txt">✓ already there</span>';
+        const col2 = fmtDuration(Math.max(0, T2 - vocab), pace);
+        return `<tr><td>${pace} words / day</td><td>${col1}</td><td>${col2}</td></tr>`;
+      }).join('');
+
+      body += `<table>
+        <thead>
+          <tr>
+            <th>Pace</th>
+            <th>→ 10,000 words<br><span class="muted" style="text-transform:none;letter-spacing:0">basic fluency</span></th>
+            <th>→ 20,000 words<br><span class="muted" style="text-transform:none;letter-spacing:0">comfortable reading</span></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+      body += `<p class="small muted">Assumes you actually retain the words. Pick a pace you can hold every single day — consistency beats intensity.</p>`;
+    }
+
+    out.push(`<section class="rec">
+      <h3>1. Vocabulary ${vocab < T1 ? '<span class="badge pri">Priority</span>' : ''}</h3>
+      ${body}
+    </section>`);
+  }
+
+  /* ==========================================================
+     2. GRAMMAR
+     ========================================================== */
+  {
+    let body = '';
+
+    if (!grammarRead && !selfCorrect){
+      body += `<p><span class="badge warn">Do this before moving on</span></p>
+      <p>You haven't ticked either grammar box yet. <strong>Don't move on to other study methods until you have.</strong> Every other recommendation below assumes this foundation is in place.</p>`;
+    }
+
+    if (!grammarRead){
+      body += `<p><strong>Work through an entire beginner grammar textbook.</strong> Read every section, understand every rule, and memorize the key points of each one. It's slow and it's supposed to be — this is the skeleton everything else hangs on.</p>
+      <p class="small">🇬🇧 English: <a href="https://drive.google.com/file/d/12kyd440RqO-UAnhiPJ3jtS5sn7aLz6_9/view?usp=sharing" target="_blank" rel="noopener">beginner grammar textbook (PDF)</a><br>
+      🇯🇵 Japanese: <a href="https://guidetojapanese.org/learn/grammar" target="_blank" rel="noopener">Tae Kim's Grammar Guide</a></p>`;
+    } else {
+      body += `<p><span class="badge ok">Done</span></p>
+      <p>You've read and understood a full beginner grammar textbook. Now change what you <em>do</em> with grammar: stop only <strong>memorizing</strong> the rules and start <strong>analyzing</strong> them.</p>
+      <p>Every sentence you meet in native content is a worked example. Find the rules you learned inside it, and check whether you can explain why each part of the sentence is the way it is. That's how memorized rules turn into real understanding.</p>`;
+    }
+
+    if (!selfCorrect){
+      body += `<p><strong>You can't yet correct your own grammar mistakes</strong> — which means you can't self-teach your way out of them, because you can't see them. <strong>Get a tutor.</strong> Have them correct your writing and your speech, and study the grammar rule behind every correction until you can catch that mistake yourself.</p>`;
+    } else {
+      body += `<p><strong>You can already correct your own grammar mistakes</strong> — good. You don't need a tutor for grammar. Study the rules on your own and keep auditing your own output against them.</p>`;
+    }
+
+    out.push(`<section class="rec">
+      <h3>2. Grammar</h3>
+      ${body}
+    </section>`);
+  }
+
+  /* ==========================================================
+     3. IMMERSION HOURS
+     ========================================================== */
+  {
+    let body;
+    if (!hours1000){
+      body = `<p>You haven't hit <strong>1,000 hours</strong> of native content yet. Nothing else substitutes for this.</p>
+      <p>Watching, listening and reading native material is what turns textbook knowledge into actual comprehension. Make 1,000 hours your first big milestone and just keep stacking hours — commute, chores, meals, before bed.</p>`;
+    } else {
+      body = `<p><span class="badge ok">Done</span></p>
+      <p>1,000+ hours of native content. You're past the first big wall — the language should be starting to feel less like decoding and more like… language.</p>
+      <p>Keep going. The next milestones are <strong>2,000–3,000 hours</strong>, and the returns compound hard from here.</p>`;
+    }
+
+    out.push(`<section class="rec">
+      <h3>3. Native content (immersion)</h3>
+      ${body}
+    </section>`);
+  }
+
+  /* ==========================================================
+     4. GOAL-SPECIFIC
+     ========================================================== */
+  {
+    const body = goal === 'understand'
+      ? `<p>Your goal is <strong>comprehension</strong>, so your plan is almost entirely <em>input</em>: graded reading → native reading, subtitled shows → unsubtitled shows, podcasts, articles, books.</p>
+         <p>Vocabulary and grammar study exist only to unlock <em>more</em> input. If you ever have to choose between studying and consuming native content, consume native content.</p>`
+      : `<p>Your goal is <strong>speaking</strong>, and input alone will not get you there. You need <em>output</em>.</p>
+         <p>On top of everything above, add: a tutor or language partner several times a week, <strong>shadowing</strong> native audio out loud, and recording yourself so you can hear your own mistakes. Speaking is a separate skill — it has to be trained separately.</p>`;
+
+    out.push(`<section class="rec">
+      <h3>4. Your goal: ${goal === 'understand' ? 'understanding' : 'speaking fluently'}</h3>
+      ${body}
+    </section>`);
+  }
+
+  /* ==========================================================
+     5. HOW TO ACTUALLY STUDY EACH PART
+     ========================================================== */
+  {
+    const body = `
+      <p>Language learning is really three different kinds of knowledge, and each one is studied in a different way:</p>
+      <ul style="margin:0 0 14px;padding-left:20px;font-size:14.5px;line-height:1.7">
+        <li><strong>Facts</strong> — vocabulary → learn by <em>recall</em> and <em>spacing</em>.</li>
+        <li><strong>Concepts</strong> — grammar rules and why they work → learn by <em>explaining</em> and <em>connecting</em>.</li>
+        <li><strong>Procedures</strong> — reading, listening, speaking, writing → you don't learn them by knowing about them. You learn them by <em>doing them with feedback</em>.</li>
+      </ul>
+      <p class="small muted" style="margin-bottom:14px">Open each section for concrete instructions.</p>
+
+      <details>
+        <summary>Vocabulary — facts</summary>
+        <div class="dbody">
+          <ul>
+            <li><strong>Active recall</strong> — answer from memory. Recognising a word when you see it is <em>not</em> mastery.</li>
+            <li><strong>Spaced repetition</strong> — review at increasing intervals (Anki or any SRS does this for you).</li>
+            <li><strong>Good flashcards</strong> — one new thing per card (i+1), cloze deletions, and ask "how / why" whenever the card allows it.</li>
+            <li><strong>Mnemonics &amp; imagery</strong> — attach a vivid picture or story to the words that refuse to stick.</li>
+            <li><strong>Chunk</strong> — group words into meaningful categories or stories instead of one long isolated list.</li>
+            <li><strong>Mixed sets</strong> — mix old and new cards so you have to <em>decide</em>, not just repeat.</li>
+          </ul>
+          <p class="avoid"><strong>Avoid:</strong> rereading word lists and highlighting as your main method. They feel productive and produce almost nothing.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Grammar — concepts</summary>
+        <div class="dbody">
+          <ul>
+            <li><strong>Self-explanation</strong> — explain the rule in your own words, out loud or on paper.</li>
+            <li><strong>Concept maps</strong> — draw the key nodes and the relationships between them (this tense vs. that tense; this particle vs. that one).</li>
+            <li><strong>Compare &amp; contrast</strong> — how are two similar rules different, and when do you use each?</li>
+            <li><strong>Examples <em>and</em> non-examples</strong> — write a sentence that uses the rule, then one that looks like it should but doesn't. The understanding lives in the non-example.</li>
+            <li><strong>Analogies</strong> — tie the rule to something you already understand in your own language.</li>
+            <li><strong>Elaborative questions</strong> — Why is this true? How does it connect to what I already know? What if the opposite were true?</li>
+            <li><strong>Predict → observe → explain</strong> — predict how a sentence will be built, check it against real native content, then explain any gap between the two.</li>
+            <li><strong>Teach it</strong> — explain it to a friend, or to an empty chair. You'll find your gaps instantly.</li>
+            <li><strong>Transfer</strong> — apply the rule to a context you haven't seen it in before.</li>
+          </ul>
+          <p class="avoid"><strong>Avoid:</strong> memorising the rule as a sentence you can recite. A memorised rule you can't apply is a fact, not a concept.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Reading — extensive + intensive</summary>
+        <div class="dbody">
+          <p><strong>Extensive reading (for fluency).</strong> Large amounts of easy material, read for pleasure.</p>
+          <ul>
+            <li>Choose texts where you understand almost everything — graded readers, comics, YA novels, articles on familiar topics.</li>
+            <li><strong>No dictionary.</strong> Guess from context. Only look a word up if it keeps appearing.</li>
+            <li>Read fast. Follow the plot, not the grammar.</li>
+            <li>Aim for volume.</li>
+          </ul>
+          <p><em>Why it works:</em> it builds automaticity (speed), reinforces vocabulary through repetition, and trains you to process chunks of language instead of one word at a time.</p>
+
+          <p style="margin-top:14px"><strong>Intensive reading (for analysis).</strong> Deep, careful reading of a short, hard text.</p>
+          <ul>
+            <li>Take a short passage. Read it once for gist.</li>
+            <li>Read again sentence by sentence. Look up every unknown word and add it to your SRS.</li>
+            <li>Analyse the grammar: why this tense here? what does this particle do? break down the structure.</li>
+            <li>Translate it into your L1, then translate it back and compare with the original.</li>
+          </ul>
+          <p><em>Why it works:</em> it connects your factual knowledge (vocabulary) and conceptual knowledge (grammar) directly to real context.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Listening — extensive, dictation, shadowing</summary>
+        <div class="dbody">
+          <p><strong>Extensive listening.</strong> Lots of comprehensible input — content you can comfortably follow.</p>
+          <ul>
+            <li>Podcasts, YouTube, shows, or anything else that counts as comprehensible input.</li>
+            <li><strong>Don't pause.</strong> Let it flow and follow the main idea, not every word.</li>
+            <li>Do it passively (commuting, chores) <em>and</em> actively (sitting down, focused).</li>
+          </ul>
+
+          <p style="margin-top:14px"><strong>Dictation.</strong> Writing down exactly what you hear.</p>
+          <ul>
+            <li>Take a short clip that has a transcript. Listen once for gist.</li>
+            <li>Replay it, pausing every few words, and write exactly what you hear. You'll rewind a lot.</li>
+            <li>Compare your text with the transcript, then analyse each error: was it pronunciation? a grammatical ending? a contraction?</li>
+          </ul>
+          <p><em>Why it works:</em> it exposes the exact holes in your listening instead of letting you coast on general meaning.</p>
+
+          <p style="margin-top:14px"><strong>Shadowing.</strong> Speaking along with the audio, like a shadow.</p>
+          <ul>
+            <li>Take a short clip with a transcript. Listen to it a few times.</li>
+            <li>Play it and speak at the same time, matching speed, rhythm, intonation and pronunciation.</li>
+            <li>Do it without the transcript first, then with it to check your accuracy.</li>
+          </ul>
+          <p><em>Why it works:</em> it bridges listening and speaking, builds muscle memory for the music of the language, and forces you to process it at native speed.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Speaking — output under pressure</summary>
+        <div class="dbody">
+          <ul>
+            <li><strong>Shadowing (speaking focus)</strong> — same as above, but watch your mouth: lips, tongue, linking words. Record yourself and compare with the original audio.</li>
+            <li><strong>Role-plays</strong> — pick a scenario (ordering coffee, asking directions, a job interview). Beginners: write a script and read it aloud. Beyond that: set a timer and improvise the scenario out loud. Use an AI voice mode or a partner for the other role, and record it so you can find vocabulary and grammar gaps afterwards.</li>
+            <li><strong>Self-talk</strong> — narrate your life: "I'm making coffee. I need to buy milk later." Do it while walking, showering, cooking. Look up any missing word immediately and try the sentence again. Nobody is listening, so there's no fear of judgement.</li>
+            <li><strong>Conversation</strong> — iTalki, Tandem, HelloTalk or local meetups. Prepare a few topics beforehand, tell your partner "please stop me and correct big mistakes," and keep a notebook for the words you didn't know.</li>
+            <li><strong>Record yourself</strong> — speak unprompted on a prompt like "describe your weekend." Don't script it, and don't stop. Then transcribe it and highlight your errors: wrong tenses, missing articles, pronunciation. You won't notice these while speaking — the recording <em>is</em> the feedback loop.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary>Writing — slow, deliberate output</summary>
+        <div class="dbody">
+          <ul>
+            <li><strong>Imitation</strong> — take a sentence you like from your reading ("If I had known, I would have gone") and write your own with the same structure ("If I had studied, I would have passed"). Do the same with paragraph shapes: topic → evidence → conclusion.</li>
+            <li><strong>Sentence combining</strong> — turn short sentences into one complex one. "I bought a car. It is red. It was expensive." → "I bought an expensive red car." Practise different conjunctions (because, although, while, which, that).</li>
+            <li><strong>Free writing</strong> — write on a timer. Don't stop, don't edit. If you don't know a word, write it in your L1 or leave a blank.</li>
+            <li><strong>Revision &amp; error correction</strong> — leave your writing for a while, then read it aloud (you'll often hear your own mistakes). Run it through a grammar checker, then get human feedback. Finally — and this is the important part — <strong>log every correction</strong>: mistake → why it happened → correct form → how to avoid it. Then put it in your SRS.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary>The daily loop (put it all together)</summary>
+        <div class="dbody">
+          <ol>
+            <li>Learn a few high-frequency words or chunks.</li>
+            <li>Study one grammar concept and self-explain it.</li>
+            <li>Do a real task: read a short text, listen to a clip, write a paragraph, or have a conversation.</li>
+            <li>Get feedback, or compare your output with a model.</li>
+            <li>Log the errors and gaps.</li>
+            <li>Turn them into new flashcards and grammar notes.</li>
+            <li>Repeat, with spacing.</li>
+          </ol>
+        </div>
+      </details>
+
+      <details>
+        <summary>Common mistakes to avoid</summary>
+        <div class="dbody">
+          <ul>
+            <li>Rereading and highlighting as your main study method.</li>
+            <li>Cramming.</li>
+            <li>Blocked practice only — drilling the same problem type over and over.</li>
+            <li>Confusing familiarity ("I recognise this") with mastery ("I can produce this").</li>
+            <li>Practising only what you're already good at.</li>
+            <li>Skipping feedback and never keeping an error log.</li>
+          </ul>
+        </div>
+      </details>
+    `;
+
+    out.push(`<section class="rec">
+      <h3>5. How to actually study each part</h3>
+      ${body}
+    </section>`);
+  }
+
+  $('resultsBody').innerHTML = out.join('');
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+show(0);
+</script>
+</body>
+</html>
