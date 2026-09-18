@@ -70,6 +70,16 @@
   }
   input[type=number]:focus{border-color:var(--accent);background:#fff;
                            box-shadow:0 0 0 3px rgba(59,108,246,.12)}
+    /* ---------- estimator grid ---------- */
+  .estimator{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media (max-width:520px){.estimator{grid-template-columns:1fr}}
+  .estimator label{display:block;font-size:11px;font-weight:700;color:var(--muted);
+                   margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;line-height:1.4}
+  .estimator label span{display:block;font-weight:400;text-transform:none;
+                        letter-spacing:0;font-size:11px}
+  .estimator input{font-size:15px;padding:11px 12px}
+  #estimateText{font-size:13px;margin:12px 0 0;color:var(--accent);
+                font-weight:650;min-height:20px}
   .links{font-size:14px;line-height:1.9;color:var(--muted);margin:0 0 18px}
   .links a{color:var(--accent);text-decoration:none;font-weight:600;
            border-bottom:1.5px solid rgba(59,108,246,.3)}
@@ -215,10 +225,10 @@
       </label>
     </section>
 
-    <!-- ============ STEP 4 ============ -->
+        <!-- ============ STEP 4 ============ -->
     <section class="step" data-step="3">
       <h1>Immersion check</h1>
-      <p class="sub">Tick it if it's true.</p>
+      <p class="sub">Tick it if it's true — or estimate your hours below.</p>
 
       <label class="option">
         <input type="checkbox" id="hours1000">
@@ -227,6 +237,28 @@
           <span>Movies, TV shows, YouTube, podcasts, streams — in the target language.</span>
         </span>
       </label>
+
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+        <p style="font-size:14.5px;font-weight:650;margin:0 0 6px">Not sure? Estimate from what you've watched</p>
+        <p class="small muted" style="margin:0 0 14px">Content in your target language, <em>without</em> subtitles in your native language.</p>
+
+        <div class="estimator">
+          <div>
+            <label>Videos <span>(~10 min each)</span></label>
+            <input type="number" id="countVideos" min="0" step="1" placeholder="0" autocomplete="off">
+          </div>
+          <div>
+            <label>TV episodes <span>(~40 min each)</span></label>
+            <input type="number" id="countEpisodes" min="0" step="1" placeholder="0" autocomplete="off">
+          </div>
+          <div>
+            <label>Movies <span>(~2 hours each)</span></label>
+            <input type="number" id="countMovies" min="0" step="1" placeholder="0" autocomplete="off">
+          </div>
+        </div>
+
+        <p id="estimateText"></p>
+      </div>
     </section>
 
     <!-- ============ RESULTS ============ -->
@@ -255,6 +287,13 @@ const TARGET_FLUENCY = 10000;   // basic fluency threshold
 const TARGET_READING = 20000;   // comfortable native reading
 const PACES = [5, 10, 15, 20, 30, 50]; // words per day
 
+// --- immersion / input constants ---
+const VIDEO_MINUTES   = 10;     // average short video length
+const EPISODE_MINUTES = 40;     // average TV episode length
+const MOVIE_MINUTES   = 120;    // average movie length
+const TARGET_INPUT_HOURS = 1000; // hours of comprehensible input for basic fluency
+const INPUT_PACES = [5, 15, 30, 60, 120, 240, 480]; // minutes per day
+
 /* ============================================================
    STATE
    ============================================================ */
@@ -263,7 +302,8 @@ const state = {
   vocab: null,
   grammarRead: false,
   selfCorrect: false,
-  hours1000: false
+  hours1000: false,
+  estimatedHours: 0    // hours estimated from content counts
 };
 
 const TOTAL_QUESTIONS = 4;
@@ -320,10 +360,19 @@ nextBtn.addEventListener('click', () => {
     state.selfCorrect = $('gSelf').checked;
   }
 
-  if (step === 3){
+    if (step === 3){
     state.hours1000 = $('hours1000').checked;
-  }
 
+    const v = Number($('countVideos').value)   || 0;
+    const e = Number($('countEpisodes').value) || 0;
+    const m = Number($('countMovies').value)   || 0;
+    state.estimatedHours = Math.round(
+      (v * VIDEO_MINUTES + e * EPISODE_MINUTES + m * MOVIE_MINUTES) / 60
+    );
+
+    // if the estimate crosses the threshold, treat it as done
+    if (state.estimatedHours >= TARGET_INPUT_HOURS) state.hours1000 = true;
+  }
   show(step + 1);
 });
 
@@ -352,6 +401,33 @@ document.querySelectorAll('input[type=radio], input[type=checkbox]').forEach(inp
   });
 });
 
+/* ---------- immersion estimator ---------- */
+function updateEstimate(){
+  const v = Number($('countVideos').value)   || 0;
+  const e = Number($('countEpisodes').value) || 0;
+  const m = Number($('countMovies').value)   || 0;
+
+  const totalMinutes = v * VIDEO_MINUTES + e * EPISODE_MINUTES + m * MOVIE_MINUTES;
+
+  if (totalMinutes === 0){
+    $('estimateText').textContent = '';
+    return;
+  }
+
+  const hours = Math.round(totalMinutes / 60);
+  $('estimateText').textContent =
+    `≈ ${hours.toLocaleString('en-US')} hour${hours === 1 ? '' : 's'} of immersion`;
+
+  if (hours >= TARGET_INPUT_HOURS){
+    $('hours1000').checked = true;
+    $('hours1000').closest('.option').classList.add('selected');
+  }
+}
+
+['countVideos','countEpisodes','countMovies'].forEach(id => {
+  $(id).addEventListener('input', updateEstimate);
+});
+  
 /* ============================================================
    HELPERS
    ============================================================ */
@@ -479,18 +555,57 @@ function renderResults(){
     </section>`);
   }
 
-  /* ==========================================================
+    /* ==========================================================
      3. IMMERSION HOURS
      ========================================================== */
   {
+    const hours     = state.estimatedHours || 0;
+    const hoursLeft = Math.max(0, TARGET_INPUT_HOURS - hours);
     let body;
-    if (!hours1000){
-      body = `<p>You haven't hit <strong>1,000 hours</strong> of native content yet. Nothing else substitutes for this.</p>
-      <p>Watching, listening and reading native material is what turns textbook knowledge into actual comprehension. Make 1,000 hours your first big milestone and just keep stacking hours — commute, chores, meals, before bed.</p>`;
-    } else {
+
+    if (hours1000){
       body = `<p><span class="badge ok">Done</span></p>
       <p>1,000+ hours of native content. You're past the first big wall — the language should be starting to feel less like decoding and more like… language.</p>
       <p>Keep going. The next milestones are <strong>2,000–3,000 hours</strong>, and the returns compound hard from here.</p>`;
+    } else {
+      body = `<p>You haven't hit <strong>1,000 hours</strong> of comprehensible input yet. Nothing else substitutes for this.</p>`;
+
+      if (hours > 0){
+        body += `<p>Based on your estimate you've done roughly <strong>${n(hours)} hours</strong>, which leaves <strong>${n(hoursLeft)} hours</strong> to go.</p>`;
+      } else {
+        body += `<p>Go back a step and estimate your hours if you can — it makes the numbers below specific to you.</p>`;
+      }
+
+      body += `<p>Here's when you'd reach basic fluency at different daily doses of <strong>comprehensible input</strong> — content you can follow the overall plot of:</p>`;
+
+      const rows = INPUT_PACES.map(minPerDay => {
+        const label = minPerDay < 60
+          ? `${minPerDay} min / day`
+          : `${minPerDay / 60} hour${minPerDay === 60 ? '' : 's'} / day`;
+
+        const days = hoursLeft / (minPerDay / 60);
+        const d    = Math.ceil(days);
+        let timeStr = `${d.toLocaleString('en-US')} day${d === 1 ? '' : 's'}`;
+
+        if (days >= 365.25){
+          const y = Math.round((days / 365.25) * 10) / 10;
+          timeStr += ` <span class="muted">· ${y === 1 ? '1 year' : y + ' years'}</span>`;
+        } else if (days >= 60){
+          const mo = Math.round((days / 30.44) * 10) / 10;
+          timeStr += ` <span class="muted">· ${mo === 1 ? '1 month' : mo + ' months'}</span>`;
+        }
+
+        return `<tr><td>${label}</td><td>${timeStr}</td></tr>`;
+      }).join('');
+
+      body += `<table>
+        <thead><tr>
+          <th>Daily input</th>
+          <th>→ 1,000 hours<br><span class="muted" style="text-transform:none;letter-spacing:0">basic fluency</span></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+      body += `<p class="small muted">"Comprehensible input" means you can follow what's happening overall — you don't need every word, but the plot should make sense.</p>`;
     }
 
     out.push(`<section class="rec">
@@ -515,18 +630,64 @@ function renderResults(){
     </section>`);
   }
 
-  /* ==========================================================
-     5. HOW TO ACTUALLY STUDY EACH PART
+    /* ==========================================================
+     5. HOW TO ACTUALLY STUDY EACH PART (conditional)
      ========================================================== */
   {
+    const isInputGoal = goal === 'understand';
+
+    const procedureBullet = isInputGoal
+      ? `<li><strong>Procedures</strong> — reading and listening → you don't learn them by knowing about them. You learn them by <em>doing them with feedback</em>.</li>`
+      : `<li><strong>Procedures</strong> — reading, listening, speaking, writing → you don't learn them by knowing about them. You learn them by <em>doing them with feedback</em>.</li>`;
+
+    const taskStep = isInputGoal
+      ? `<li>Do a real task: read a short text or listen to a clip.</li>`
+      : `<li>Do a real task: read a short text, listen to a clip, write a paragraph, or have a conversation.</li>`;
+
+    const feedbackStep = isInputGoal
+      ? `<li>Check your understanding — compare with a transcript, translation, or summary.</li>`
+      : `<li>Get feedback, or compare your output with a model.</li>`;
+
+    const outputSections = isInputGoal ? '' : `
+      <details>
+        <summary>Speaking — output under pressure</summary>
+        <div class="dbody">
+          <ul>
+            <li><strong>Shadowing (speaking focus)</strong> — same as above, but watch your mouth: lips, tongue, linking words. Record yourself and compare with the original audio.</li>
+            <li><strong>Role-plays</strong> — pick a scenario (ordering coffee, asking directions, a job interview). Beginners: write a script and read it aloud. Beyond that: set a timer and improvise the scenario out loud. Use an AI voice mode or a partner for the other role, and record it so you can find vocabulary and grammar gaps afterwards.</li>
+            <li><strong>Self-talk</strong> — narrate your life: "I'm making coffee. I need to buy milk later." Do it while walking, showering, cooking. Look up any missing word immediately and try the sentence again. Nobody is listening, so there's no fear of judgement.</li>
+            <li><strong>Conversation</strong> — iTalki, Tandem, HelloTalk or local meetups. Prepare a few topics beforehand, tell your partner "please stop me and correct big mistakes," and keep a notebook for the words you didn't know.</li>
+            <li><strong>Record yourself</strong> — speak unprompted on a prompt like "describe your weekend." Don't script it, and don't stop. Then transcribe it and highlight your errors: wrong tenses, missing articles, pronunciation. You won't notice these while speaking — the recording <em>is</em> the feedback loop.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary>Writing — slow, deliberate output</summary>
+        <div class="dbody">
+          <ul>
+            <li><strong>Imitation</strong> — take a sentence you like from your reading ("If I had known, I would have gone") and write your own with the same structure ("If I had studied, I would have passed"). Do the same with paragraph shapes: topic → evidence → conclusion.</li>
+            <li><strong>Sentence combining</strong> — turn short sentences into one complex one. "I bought a car. It is red. It was expensive." → "I bought an expensive red car." Practise different conjunctions (because, although, while, which, that).</li>
+            <li><strong>Free writing</strong> — write on a timer. Don't stop, don't edit. If you don't know a word, write it in your L1 or leave a blank.</li>
+            <li><strong>Revision &amp; error correction</strong> — leave your writing for a while, then read it aloud (you'll often hear your own mistakes). Run it through a grammar checker, then get human feedback. Finally — and this is the important part — <strong>log every correction</strong>: mistake → why it happened → correct form → how to avoid it. Then put it in your SRS.</li>
+          </ul>
+        </div>
+      </details>
+    `;
+
+    const inputNote = isInputGoal
+      ? `<p class="small muted" style="margin:14px 0 0">Because your goal is comprehension, the speaking and writing sections are hidden — they'd be a distraction. If you later switch to wanting to speak fluently, come back and re-run this.</p>`
+      : '';
+
     const body = `
       <p>Language learning is really three different kinds of knowledge, and each one is studied in a different way:</p>
       <ul style="margin:0 0 14px;padding-left:20px;font-size:14.5px;line-height:1.7">
         <li><strong>Facts</strong> — vocabulary → learn by <em>recall</em> and <em>spacing</em>.</li>
         <li><strong>Concepts</strong> — grammar rules and why they work → learn by <em>explaining</em> and <em>connecting</em>.</li>
-        <li><strong>Procedures</strong> — reading, listening, speaking, writing → you don't learn them by knowing about them. You learn them by <em>doing them with feedback</em>.</li>
+        ${procedureBullet}
       </ul>
       <p class="small muted" style="margin-bottom:14px">Open each section for concrete instructions.</p>
+      ${inputNote}
 
       <details>
         <summary>Vocabulary — facts</summary>
@@ -612,30 +773,7 @@ function renderResults(){
         </div>
       </details>
 
-      <details>
-        <summary>Speaking — output under pressure</summary>
-        <div class="dbody">
-          <ul>
-            <li><strong>Shadowing (speaking focus)</strong> — same as above, but watch your mouth: lips, tongue, linking words. Record yourself and compare with the original audio.</li>
-            <li><strong>Role-plays</strong> — pick a scenario (ordering coffee, asking directions, a job interview). Beginners: write a script and read it aloud. Beyond that: set a timer and improvise the scenario out loud. Use an AI voice mode or a partner for the other role, and record it so you can find vocabulary and grammar gaps afterwards.</li>
-            <li><strong>Self-talk</strong> — narrate your life: "I'm making coffee. I need to buy milk later." Do it while walking, showering, cooking. Look up any missing word immediately and try the sentence again. Nobody is listening, so there's no fear of judgement.</li>
-            <li><strong>Conversation</strong> — iTalki, Tandem, HelloTalk or local meetups. Prepare a few topics beforehand, tell your partner "please stop me and correct big mistakes," and keep a notebook for the words you didn't know.</li>
-            <li><strong>Record yourself</strong> — speak unprompted on a prompt like "describe your weekend." Don't script it, and don't stop. Then transcribe it and highlight your errors: wrong tenses, missing articles, pronunciation. You won't notice these while speaking — the recording <em>is</em> the feedback loop.</li>
-          </ul>
-        </div>
-      </details>
-
-      <details>
-        <summary>Writing — slow, deliberate output</summary>
-        <div class="dbody">
-          <ul>
-            <li><strong>Imitation</strong> — take a sentence you like from your reading ("If I had known, I would have gone") and write your own with the same structure ("If I had studied, I would have passed"). Do the same with paragraph shapes: topic → evidence → conclusion.</li>
-            <li><strong>Sentence combining</strong> — turn short sentences into one complex one. "I bought a car. It is red. It was expensive." → "I bought an expensive red car." Practise different conjunctions (because, although, while, which, that).</li>
-            <li><strong>Free writing</strong> — write on a timer. Don't stop, don't edit. If you don't know a word, write it in your L1 or leave a blank.</li>
-            <li><strong>Revision &amp; error correction</strong> — leave your writing for a while, then read it aloud (you'll often hear your own mistakes). Run it through a grammar checker, then get human feedback. Finally — and this is the important part — <strong>log every correction</strong>: mistake → why it happened → correct form → how to avoid it. Then put it in your SRS.</li>
-          </ul>
-        </div>
-      </details>
+      ${outputSections}
 
       <details>
         <summary>The daily loop (put it all together)</summary>
@@ -643,8 +781,8 @@ function renderResults(){
           <ol>
             <li>Learn a few high-frequency words or chunks.</li>
             <li>Study one grammar concept and self-explain it.</li>
-            <li>Do a real task: read a short text, listen to a clip, write a paragraph, or have a conversation.</li>
-            <li>Get feedback, or compare your output with a model.</li>
+            ${taskStep}
+            ${feedbackStep}
             <li>Log the errors and gaps.</li>
             <li>Turn them into new flashcards and grammar notes.</li>
             <li>Repeat, with spacing.</li>
@@ -672,7 +810,6 @@ function renderResults(){
       ${body}
     </section>`);
   }
-
   $('resultsBody').innerHTML = out.join('');
 }
 
