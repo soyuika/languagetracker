@@ -502,9 +502,10 @@ function renderResults(){
       const nextTarget = vocab < T1 ? T1 : T2;
       const need = nextTarget - vocab;
 
-      if (vocab < T1){
+            if (vocab < T1){
         body += `<p>You know roughly <strong>${n(vocab)} words</strong>.</p>`;
         body += `<p><strong>10,000 words</strong> is the rough threshold for <strong>basic fluency</strong> — enough to understand most of what you encounter and to express most of your thoughts without much struggle. You're <strong>${n(need)} words</strong> away from it.</p>`;
+        body += `<p class="small muted">"Basic fluency" here means roughly <strong>CEFR B2–C1</strong>.</p>`;
         body += `<p>And to genuinely <em>enjoy</em> reading in the language — native fiction, a variety of genres, picking up any book you want — the number goes closer to <strong>20,000 words</strong>. That's <strong>${n(T2 - vocab)} words</strong> away.</p>`;
       } else {
         body += `<p>You know roughly <strong>${n(vocab)} words</strong> — past the ~10,000-word threshold for basic fluency. Nice.</p>`;
@@ -584,7 +585,8 @@ function renderResults(){
       <p>1,000+ hours of native content. You're past the first big wall — the language should be starting to feel less like decoding and more like… language.</p>
       <p>Keep going. The next milestones are <strong>2,000–3,000 hours</strong>, and the returns compound hard from here.</p>`;
     } else {
-      body = `<p>You haven't hit <strong>1,000 hours</strong> of comprehensible input yet. Nothing else substitutes for this.</p>`;
+            body = `<p>You haven't hit <strong>1,000 hours</strong> of comprehensible input yet. Nothing else substitutes for this.</p>
+      <p class="small muted">1,000 hours corresponds to roughly <strong>CEFR B2–C1</strong> — the same "basic fluency" target referenced above.</p>`;
 
       if (hours > 0){
         body += `<p>Based on your estimate you've done roughly <strong>${n(hours)} hours</strong>, which leaves <strong>${n(hoursLeft)} hours</strong> to go.</p>`;
