@@ -257,7 +257,8 @@
           </div>
         </div>
 
-        <p id="estimateText"></p>
+                <p id="estimateText"></p>
+        <p class="small muted" id="referenceLine" style="margin-top:10px"></p>
       </div>
     </section>
 
@@ -293,6 +294,7 @@ const EPISODE_MINUTES = 40;     // average TV episode length
 const MOVIE_MINUTES   = 120;    // average movie length
 const TARGET_INPUT_HOURS = 1000; // hours of comprehensible input for basic fluency
 const INPUT_PACES = [5, 15, 30, 60, 120, 240, 480]; // minutes per day
+  const EPISODES_PER_SEASON = 12; // average episodes per season
 
 /* ============================================================
    STATE
@@ -427,6 +429,20 @@ function updateEstimate(){
 ['countVideos','countEpisodes','countMovies'].forEach(id => {
   $(id).addEventListener('input', updateEstimate);
 });
+  /* ---------- reference line for 1,000 hours ---------- */
+function updateReferenceLine(){
+  const totalMinutes = TARGET_INPUT_HOURS * 60;
+  const episodes     = Math.round(totalMinutes / EPISODE_MINUTES);
+  const seasons      = Math.round(episodes / EPISODES_PER_SEASON);
+  const movies       = Math.round(totalMinutes / MOVIE_MINUTES);
+  const videos       = Math.round(totalMinutes / VIDEO_MINUTES);
+
+  $('referenceLine').textContent =
+    `For reference: 1,000 hours is about ${episodes.toLocaleString('en-US')} episodes ` +
+    `(~${seasons.toLocaleString('en-US')} seasons) of an average TV show, ` +
+    `${movies.toLocaleString('en-US')} movies, or ` +
+    `${videos.toLocaleString('en-US')} YouTube videos (10 min each).`;
+}
   
 /* ============================================================
    HELPERS
@@ -816,6 +832,7 @@ function renderResults(){
 /* ============================================================
    INIT
    ============================================================ */
+updateReferenceLine();
 show(0);
 </script>
 </body>
